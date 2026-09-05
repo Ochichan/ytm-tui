@@ -421,9 +421,6 @@ impl App {
         if self.beginner_coach_hit(col, row) {
             return Vec::new();
         }
-        if !ctrl && let Some(cmds) = self.atlas_mouse_scroll(up, col, row) {
-            return cmds;
-        }
         // While the wheel-zoom lock is on, Ctrl+wheel degrades to a plain wheel scroll
         // (the whole point: modifier-assisted scrolling without accidental zooming);
         // the Ctrl+-/= keys keep zooming either way.
@@ -477,6 +474,11 @@ impl App {
             self.queue_popup.scroll.wheel(up, n, self.queue.len());
             self.dirty = true;
             return Vec::new();
+        }
+        // Below every overlay that captures the wheel: a sheet drawn over the globe scrolls,
+        // the globe zooms only when it is the topmost surface under the pointer.
+        if !ctrl && let Some(cmds) = self.atlas_mouse_scroll(up, col, row) {
+            return cmds;
         }
         if self.search_filter.open && self.active_search_surface() != ActiveSearchSurface::Local {
             let len = self.search_filter.matches.len();

@@ -196,7 +196,7 @@ Actual cover images drawn right in the terminal (Kitty/Sixel/iTerm2, auto-detect
 
 ### Radio mode — and it knows the song
 
-**`Alt+Shift+R`** turns the whole app into an internet-radio tuner; press **`i`** and Gemini names what's playing on the live stream, **`f`** favorites it. Press **`a`** for **Atlas**: a rotatable, zoomable globe of live stations drawn in Braille dots — drag, flick, wheel, click a signal to tune, click a country to browse — with no image protocol required.
+**`Alt+Shift+R`** turns the whole app into an internet-radio tuner; press **`i`** and Gemini names what's playing on the live stream, **`f`** favorites it. Press **`a`** for **Atlas**: a rotatable, zoomable globe of live stations drawn in Braille dots — drag, flick (with animations on), wheel, click a signal to tune, click a country to browse — with no image protocol required.
 
 ![Radio mode as an internet-radio tuner](docs/media/radio.png)
 > 🖼️ *GIF coming soon.*

@@ -60,7 +60,7 @@ impl AtlasField {
     }
 
     pub fn value_display(self, cfg: &AtlasConfig) -> String {
-        let toggle = |on: bool| if on { "✓" } else { "✗" }.to_owned();
+        let toggle = super::toggle_str;
         match self {
             AtlasField::Renderer => cfg.renderer.label().to_owned(),
             AtlasField::StationLimit => cfg.effective_station_limit().to_string(),

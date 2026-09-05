@@ -1053,7 +1053,7 @@ impl SettingsState {
     }
 }
 
-fn toggle_str(on: bool) -> String {
+pub(crate) fn toggle_str(on: bool) -> String {
     if on {
         "[x]".to_owned()
     } else {

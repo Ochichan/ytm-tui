@@ -226,6 +226,11 @@ fn drag_rotates_and_a_flick_coasts_only_with_animations_on() {
         "dragging right lowers the centre longitude"
     );
     assert!(app.radio_mode.atlas.press.is_some_and(|p| p.moved));
+    // The release velocity is sampled against wall-clock time since the press; a stalled test
+    // runner must not turn a flick into a slow drag, so pin the clock right before releasing.
+    let press = app.radio_mode.atlas.press.as_mut().unwrap();
+    press.started = std::time::Instant::now();
+    app.radio_mode.atlas.drag_clock = 0.0;
     app.update(Msg::MouseLeftUp);
     assert!(
         app.radio_mode.atlas.kinetic.active(),
@@ -477,4 +482,68 @@ fn follow_playing_centres_the_globe_once_the_station_is_admitted() {
         app.radio_mode.atlas.follow_uuid.is_none(),
         "follow fires once"
     );
+}
+
+#[test]
+fn escape_and_reset_clear_the_browsed_country_and_a_slow_clock_keeps_coasting() {
+    let mut app = atlas_app();
+    app.config.animations.master = true;
+    app.config.animations.radio_master = Some(true);
+    app.radio_mode
+        .atlas
+        .camera
+        .focus(crate::atlas::LatLon::new(35.0, 103.0));
+    render_app_buffer(&app, 120, 40);
+    app.update(Msg::Key(key(KeyCode::Char('c'))));
+    assert_eq!(app.radio_mode.atlas.active_country, Some(*b"CN"));
+    app.update(Msg::Key(key(KeyCode::Esc)));
+    assert!(
+        app.radio_mode.atlas.open,
+        "Esc first drops the country filter"
+    );
+    assert!(app.radio_mode.atlas.active_country.is_none());
+    assert!(app.radio_mode.atlas.active_mask.is_none());
+
+    app.update(Msg::Key(key(KeyCode::Char('c'))));
+    app.update(Msg::Key(key(KeyCode::Char('0'))));
+    assert!(
+        app.radio_mode.atlas.active_country.is_none(),
+        "reset view returns to the world"
+    );
+
+    // A 5 fps animation clock delivers 200 ms ticks; the coast must survive them.
+    app.radio_mode.atlas.kinetic = crate::atlas::view::Kinetic::launch(600.0, 0.0).unwrap();
+    app.radio_mode.atlas.last_tick =
+        Some(std::time::Instant::now() - std::time::Duration::from_millis(200));
+    app.update(Msg::AnimTick);
+    assert!(
+        app.radio_mode.atlas.kinetic.active(),
+        "a slow tick integrates instead of aborting"
+    );
+    app.radio_mode.atlas.last_tick =
+        Some(std::time::Instant::now() - std::time::Duration::from_secs(3));
+    app.update(Msg::AnimTick);
+    assert!(
+        !app.radio_mode.atlas.kinetic.active(),
+        "a parked clock ends the coast"
+    );
+}
+
+#[test]
+fn panel_tabs_cycle_with_left_and_right_and_a_toggles_closed() {
+    let mut app = atlas_app();
+    app.update(Msg::Key(key(KeyCode::Tab)));
+    assert_eq!(app.radio_mode.atlas.focus, AtlasFocus::Panel);
+    app.update(Msg::Key(key(KeyCode::Right)));
+    assert_eq!(
+        app.radio_mode.atlas.panel_tab,
+        crate::app::atlas::PanelTab::Favorites
+    );
+    app.update(Msg::Key(key(KeyCode::Left)));
+    assert_eq!(
+        app.radio_mode.atlas.panel_tab,
+        crate::app::atlas::PanelTab::World
+    );
+    app.update(Msg::Key(key(KeyCode::Char('a'))));
+    assert!(!app.radio_mode.atlas.open, "`a` toggles Atlas closed again");
 }

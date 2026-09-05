@@ -109,10 +109,12 @@ const ROTATE_BIG_STEP_DEG: f32 = 15.0;
 const ZOOM_STEP: f32 = 1.25;
 const WHEEL_ZOOM: f32 = 1.284_025_4; // e^0.25
 const WORLD_PAGE: u32 = 500;
-const MAX_MORE_PAGES: u32 = 5;
+const MORE_PAGE_SLACK: u32 = 3;
 const SEARCH_MAX: usize = 150;
 const HIT_RADIUS_CELLS: f32 = 1.5;
 const AUTOROTATE_DEG_PER_SEC: f32 = 3.0;
+/// A tick gap longer than this means the clock was parked (unfocused, hidden), not slow.
+const STALL_ABORT_SECS: f32 = 1.0;
 /// Below this many stations the panel shows a hint instead of an empty list.
 const RESOLVE_MAX: usize = 100;
 
@@ -425,7 +427,11 @@ impl App {
                 | Action::SpeedDown
                 | Action::IdentifyNowPlaying
                 | Action::ToggleRadioMode
-                | Action::ToggleRecordings),
+                | Action::ToggleRecordings
+                | Action::ToggleAtlas
+                | Action::OpenSettings
+                | Action::OpenSearch
+                | Action::SleepTimer),
             ) => self.on_player_action(action),
             _ => Vec::new(),
         }
@@ -495,8 +501,22 @@ impl App {
             self.dirty = true;
             return Vec::new();
         }
+        if atlas.active_country.is_some() {
+            self.atlas_clear_country();
+            return Vec::new();
+        }
         self.close_atlas();
         Vec::new()
+    }
+
+    /// Back to the world view: the country tint, its panel filter and the mask go away.
+    fn atlas_clear_country(&mut self) {
+        let atlas = &mut self.radio_mode.atlas;
+        atlas.active_country = None;
+        atlas.active_country_name.clear();
+        atlas.active_mask = None;
+        atlas.context.clear();
+        self.atlas_refresh_panel_rows();
     }
 
     pub(in crate::app) fn on_atlas_action(&mut self, action: Action) -> Vec<Cmd> {
@@ -509,6 +529,7 @@ impl App {
             Action::AtlasZoomOut => self.atlas_zoom(1.0 / ZOOM_STEP),
             Action::AtlasResetView => {
                 self.atlas_stop_motion();
+                self.atlas_clear_country();
                 let atlas = &mut self.radio_mode.atlas;
                 atlas.camera = Camera::new();
                 let playing = self.atlas_playing_index();
@@ -605,6 +626,18 @@ impl App {
         let atlas = &mut self.radio_mode.atlas;
         if atlas.focus == AtlasFocus::Panel && dlat != 0.0 {
             return self.atlas_panel_move(dlat < 0.0);
+        }
+        // With the panel focused, left/right walk its tabs so favorites/recent stay reachable
+        // without a mouse.
+        if atlas.focus == AtlasFocus::Panel && dlon != 0.0 {
+            let tabs = PanelTab::ALL;
+            let pos = tabs.iter().position(|t| *t == atlas.panel_tab).unwrap_or(0);
+            let next = if dlon > 0.0 {
+                (pos + 1) % tabs.len()
+            } else {
+                (pos + tabs.len() - 1) % tabs.len()
+            };
+            return self.atlas_mouse_target(AtlasTarget::PanelTab(tabs[next]), 0, 0);
         }
         atlas.camera.rotate_by(dlat, dlon);
         self.dirty = true;
@@ -1010,7 +1043,7 @@ impl App {
             Some(country) => self.atlas_browse_country(country),
             None => {
                 self.radio_mode.atlas.highlight = None;
-                self.atlas_set_context(String::new());
+                self.atlas_clear_country();
                 Vec::new()
             }
         }
@@ -1061,6 +1094,13 @@ impl App {
             .last_tick
             .map_or(1.0 / 30.0, |t| now.duration_since(t).as_secs_f32());
         atlas.last_tick = Some(now);
+        // A slow animation clock (5 fps is allowed) must not read as a stalled one: clamp the
+        // integration step, and only a real pause (unfocused, mode switch) aborts the coast.
+        let dt = if dt > STALL_ABORT_SECS {
+            f32::INFINITY
+        } else {
+            dt.min(crate::atlas::view::KINETIC_MAX_FRAME)
+        };
         if atlas.kinetic.active() {
             let still = atlas.kinetic.step(&mut atlas.camera, dt, radius);
             if !still {
@@ -1142,9 +1182,11 @@ impl App {
                 let atlas = &mut self.radio_mode.atlas;
                 // Progressive loading continues once no network refresh is pending, whether the
                 // page came from the directory or from a fresh cache.
+                // Random pages overlap, so allow a few beyond the arithmetic minimum.
+                let page_budget = limit.div_ceil(WORLD_PAGE) + MORE_PAGE_SLACK;
                 if !refreshing
                     && (atlas.catalog.len() as u32) < limit
-                    && atlas.pages_fetched < MAX_MORE_PAGES
+                    && atlas.pages_fetched < page_budget
                 {
                     atlas.loading = true;
                     let page = atlas.pages_fetched.max(1);
