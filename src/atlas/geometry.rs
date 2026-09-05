@@ -270,6 +270,9 @@ pub fn decode(bytes: &[u8]) -> Result<World, DecodeError> {
         let mut rings = Vec::with_capacity(usize::from(ring_count));
         for _ in 0..ring_count {
             let pt_count = usize::from(r.u16());
+            if pt_count < 3 {
+                return Err(DecodeError("ring with fewer than three points"));
+            }
             let mut pts = Vec::with_capacity(pt_count);
             let mut lon = i32::from(r.i16());
             let mut lat = i32::from(r.i16());
@@ -288,7 +291,15 @@ pub fn decode(bytes: &[u8]) -> Result<World, DecodeError> {
             bbox,
             rings,
         };
-        by_code.insert(country.code, index);
+        // A code can appear twice in the source (Somalia/Somaliland, Cyprus/Northern
+        // Cyprus); the larger territory owns the lookup so station estimates land sensibly.
+        let area = |c: &Country| c.rings.iter().map(|r| r.area).sum::<f32>();
+        let keep = by_code
+            .get(&country.code)
+            .is_none_or(|&i| area(&countries[usize::from(i)]) < area(&country));
+        if keep {
+            by_code.insert(country.code, index);
+        }
         countries.push(country);
     }
     if r.pos != bytes.len() {
@@ -325,8 +336,8 @@ mod tests {
         let world = world();
         assert_eq!(world.countries.len(), 177);
         let (total, hash) = fnv_pairs(world);
-        assert_eq!(total, 10582);
-        assert_eq!(format!("{hash:08x}"), "b5083447");
+        assert_eq!(total, 10295);
+        assert_eq!(format!("{hash:08x}"), "58dc78dc");
     }
 
     #[test]
@@ -365,5 +376,12 @@ mod tests {
         assert!(!point_in_ring(&square, LatLon::new(15.0, 5.0)));
         assert!(!point_in_ring(&square, LatLon::new(-0.1, 5.0)));
         assert!(point_in_ring(&square, LatLon::new(0.0, 5.0)));
+    }
+
+    #[test]
+    fn duplicate_codes_resolve_to_the_larger_territory() {
+        let world = world();
+        assert_eq!(&*world.by_code("SO").expect("SO").name, "Somalia");
+        assert_eq!(&*world.by_code("CY").expect("CY").name, "Cyprus");
     }
 }

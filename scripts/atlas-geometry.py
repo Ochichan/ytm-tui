@@ -54,16 +54,13 @@ def zigzag_varint(value):
 
 
 def encode_name(name):
-    raw = name.encode("utf-8")
-    if len(raw) > 60:
-        while len(raw) > 60:
+    raw = name.encode("utf-8")[:60]
+    while True:
+        try:
+            raw.decode("utf-8")
+            return raw
+        except UnicodeDecodeError:
             raw = raw[:-1]
-            try:
-                raw.decode("utf-8")
-                break
-            except UnicodeDecodeError:
-                continue
-    return raw
 
 
 def main():
@@ -89,6 +86,8 @@ def main():
             for pt in raw[1:]:
                 if pt != deduped[-1]:
                     deduped.append(pt)
+            if len(deduped) > 1 and deduped[-1] == deduped[0]:
+                deduped.pop()
             if len(deduped) >= 3:
                 rings.append(deduped)
         bbox = (
@@ -99,7 +98,8 @@ def main():
         )
         largest = max(rings, key=lambda ring: abs(signed_area_and_centroid(unwrap(ring))[0]))
         _, (cx, cy) = signed_area_and_centroid(unwrap(largest))
-        cx = cx - 36000 if cx > 18000 else cx
+        cx = (cx + 18000) % 36000 - 18000
+        cx = 18000 if cx == -18000 else cx
         out += code + bytes([len(name)]) + name
         out += struct.pack("<hhhhhh", round(cy), round(cx), *bbox)
         out += struct.pack("<H", len(rings))

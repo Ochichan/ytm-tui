@@ -86,8 +86,9 @@ impl LandMask {
             }
             crossings.sort_by(f32::total_cmp);
             for pair in crossings.chunks_exact(2) {
-                let x0 = (pair[0].ceil().max(0.0) as usize).min(MASK_W);
-                let x1 = (pair[1].ceil().max(0.0) as usize).min(MASK_W);
+                // Pixel centres, matching the row-centre sampling above.
+                let x0 = ((pair[0] - 0.5).ceil().max(0.0) as usize).min(MASK_W);
+                let x1 = ((pair[1] - 0.5).ceil().max(0.0) as usize).min(MASK_W);
                 for x in x0..x1 {
                     self.set(x, y);
                 }
