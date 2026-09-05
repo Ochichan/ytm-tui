@@ -88,7 +88,7 @@ fn mark_auth_search_healthy() {
 }
 
 const PROVIDER_SEARCH_TIMEOUT: Duration = Duration::from_secs(12);
-const PROVIDER_JSON_MAX: usize = 2 * 1024 * 1024;
+pub(super) const PROVIDER_JSON_MAX: usize = 2 * 1024 * 1024;
 const YTDLP_SEARCH_TIMEOUT: Duration = Duration::from_secs(12);
 const YTDLP_JSON_MAX: usize = 2 * 1024 * 1024;
 /// Flat playlist extraction budget: hundreds of entries and a slower endpoint than a
@@ -986,7 +986,7 @@ async fn lookup_video_song(video_id: &str) -> Song {
     }
 }
 
-fn json_string(json: &serde_json::Value, keys: &[&str]) -> Option<String> {
+pub(super) fn json_string(json: &serde_json::Value, keys: &[&str]) -> Option<String> {
     keys.iter()
         .find_map(|key| json.get(key).and_then(serde_json::Value::as_str))
         .map(str::to_owned)
@@ -1257,7 +1257,7 @@ async fn radio_browser_search(query: &str, limit: usize) -> Result<Vec<Song>> {
     Ok(entries.iter().filter_map(parse_radio_station).collect())
 }
 
-fn provider_client() -> Result<reqwest::Client> {
+pub fn provider_client() -> Result<reqwest::Client> {
     reqwest::Client::builder()
         .timeout(PROVIDER_SEARCH_TIMEOUT)
         .user_agent(format!("yututui/{}", env!("CARGO_PKG_VERSION")))
@@ -1365,39 +1365,7 @@ fn parse_jamendo_track(e: &serde_json::Value) -> Option<Song> {
     ))
 }
 
-fn parse_radio_station(e: &serde_json::Value) -> Option<Song> {
-    let id = json_string(e, &["stationuuid"])?;
-    let raw_url = json_string(e, &["url_resolved"]).or_else(|| json_string(e, &["url"]))?;
-    let url = match super::validate_playable_url(SearchSource::RadioBrowser, &raw_url) {
-        Ok(url) => url,
-        Err(error) => {
-            tracing::debug!(id = %id, %error, "skipping radio station with invalid stream URL");
-            return None;
-        }
-    };
-    let title = json_string(e, &["name"]).unwrap_or_else(|| "Unknown station".to_owned());
-    let codec = json_string(e, &["codec"]).unwrap_or_default();
-    let bitrate = e
-        .get("bitrate")
-        .and_then(serde_json::Value::as_u64)
-        .filter(|b| *b > 0)
-        .map(|b| format!("{b}k"))
-        .unwrap_or_default();
-    let country = json_string(e, &["country"]).unwrap_or_default();
-    let artist = [country.as_str(), codec.as_str(), bitrate.as_str()]
-        .into_iter()
-        .filter(|s| !s.trim().is_empty())
-        .collect::<Vec<_>>()
-        .join(" / ");
-    Some(Song::from_source(
-        SearchSource::RadioBrowser,
-        id,
-        title,
-        artist,
-        String::new(),
-        PlayableRef::RadioStream { url },
-    ))
-}
+use super::radio_browser::parse_radio_station;
 
 async fn archive_audio_file(
     client: &reqwest::Client,
