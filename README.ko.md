@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/icons/yututui-mark.svg" width="120" alt="YuTuTui! mark">
+</p>
+
 # YuTuTui!
 
 [English](README.md) · **한국어** · [日本語](README.ja.md)
