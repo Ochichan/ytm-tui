@@ -42,23 +42,15 @@ impl AtlasField {
 
     pub fn label(self) -> String {
         match self {
-            AtlasField::Renderer => t!("Atlas renderer", "아틀라스 렌더러", "アトラス描画方式"),
+            AtlasField::Renderer => t!("Atlas renderer", "아틀라스 렌더러", "アトラス描画"),
             AtlasField::StationLimit => t!("Atlas stations", "아틀라스 방송국 수", "アトラス局数"),
-            AtlasField::Panel => t!(
-                "Atlas station panel",
-                "아틀라스 방송국 패널",
-                "アトラス局パネル"
-            ),
-            AtlasField::Coast => t!(
-                "Atlas flick to coast",
-                "아틀라스 관성 회전",
-                "アトラス慣性回転"
-            ),
+            AtlasField::Panel => t!("Atlas panel", "아틀라스 패널", "アトラスパネル"),
+            AtlasField::Coast => t!("Atlas coasting", "아틀라스 관성 회전", "アトラス慣性"),
             AtlasField::Grid => t!("Atlas graticule", "아틀라스 경위선", "アトラス経緯線"),
             AtlasField::FollowPlaying => t!(
-                "Atlas follows playing station",
-                "아틀라스가 재생 중인 방송국 따라가기",
-                "アトラスが再生中の局を追う"
+                "Atlas follows play",
+                "아틀라스 재생 추적",
+                "アトラス再生追従"
             ),
             AtlasField::Autorotate => {
                 t!("Atlas autorotate", "아틀라스 자동 회전", "アトラス自動回転")

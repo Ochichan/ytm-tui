@@ -343,37 +343,37 @@ fn render_panel(frame: &mut Frame, app: &App, area: Rect) {
 
     // Rows.
     let list = rows[2];
-    let (len, label_of): (usize, Box<dyn Fn(usize) -> Option<(String, String, bool)>>) =
-        match &atlas.panel_rows {
-            PanelRows::Catalog(idx) => (
-                idx.len(),
-                Box::new(move |i| {
-                    let st = atlas.catalog.get(*idx.get(i)?)?;
-                    Some((
-                        st.name.to_string(),
-                        st.meta_line(),
-                        app.library.is_radio_favorite(&st.uuid),
-                    ))
-                }),
-            ),
-            PanelRows::Library(uuids) => (
-                uuids.len(),
-                Box::new(move |i| {
-                    let uuid = uuids.get(i)?;
-                    let song = app
-                        .library
-                        .radio_favorites
-                        .iter()
-                        .chain(app.library.radios.iter())
-                        .find(|s| s.video_id.as_str() == &**uuid)?;
-                    Some((
-                        song.title.clone(),
-                        song.artist.clone(),
-                        app.library.is_radio_favorite(uuid),
-                    ))
-                }),
-            ),
-        };
+    type RowLabel<'a> = Box<dyn Fn(usize) -> Option<(String, String, bool)> + 'a>;
+    let (len, label_of): (usize, RowLabel<'_>) = match &atlas.panel_rows {
+        PanelRows::Catalog(idx) => (
+            idx.len(),
+            Box::new(move |i| {
+                let st = atlas.catalog.get(*idx.get(i)?)?;
+                Some((
+                    st.name.to_string(),
+                    st.meta_line(),
+                    app.library.is_radio_favorite(&st.uuid),
+                ))
+            }),
+        ),
+        PanelRows::Library(uuids) => (
+            uuids.len(),
+            Box::new(move |i| {
+                let uuid = uuids.get(i)?;
+                let song = app
+                    .library
+                    .radio_favorites
+                    .iter()
+                    .chain(app.library.radios.iter())
+                    .find(|s| s.video_id.as_str() == &**uuid)?;
+                Some((
+                    song.title.clone(),
+                    song.artist.clone(),
+                    app.library.is_radio_favorite(uuid),
+                ))
+            }),
+        ),
+    };
     if len == 0 {
         let empty = match atlas.panel_tab {
             _ if !atlas.search_query.is_empty() => {

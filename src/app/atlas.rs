@@ -755,15 +755,14 @@ impl App {
     }
 
     fn atlas_random(&mut self) -> Vec<Cmd> {
-        let atlas = &self.radio_mode.atlas;
-        let seed = u64::from(self.anim.anim_frame as u32)
-            ^ (atlas.generation << 20)
-            ^ atlas.catalog.len() as u64;
-        let seed = seed.wrapping_mul(0x9E37_79B9_7F4A_7C15)
-            ^ std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .map_or(0, |d| d.as_nanos() as u64);
-        match atlas.catalog.random_avoiding(atlas.recent.as_slice(), seed) {
+        let seed = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_or(0, |d| d.as_nanos() as u64)
+            ^ (self.radio_mode.atlas.generation << 20)
+            ^ self.anim.anim_frame;
+        let atlas = &mut self.radio_mode.atlas;
+        let pick = atlas.catalog.random_avoiding(atlas.recent.as_slice(), seed);
+        match pick {
             Some(idx) => {
                 self.atlas_stop_motion();
                 if let Some(st) = self.radio_mode.atlas.catalog.get(idx) {
@@ -831,7 +830,7 @@ impl App {
         let atlas = &mut self.radio_mode.atlas;
         atlas.selected = Some(idx);
         atlas.highlight = None;
-        atlas.recent.push(st.uuid.clone());
+        atlas.recent.push(&st.uuid);
         if already {
             self.dirty = true;
             return Vec::new();
@@ -933,9 +932,8 @@ impl App {
         if !self.atlas_active() {
             return None;
         }
-        let Some(geom) = self.atlas_geometry() else {
-            return None;
-        };
+        let geom = self.atlas_geometry()?;
+        let (dpx, dpy) = self.atlas_renderer().dots_per_cell();
         let atlas = &mut self.radio_mode.atlas;
         let press = atlas.press.as_mut()?;
         let (dx_cells, dy_cells) = (
@@ -949,7 +947,6 @@ impl App {
         press.col = col;
         press.row = row;
         // Dots with rows growing downward — the convention `Kinetic` and `rotate_by` share.
-        let (dpx, dpy) = self.atlas_renderer().dots_per_cell();
         let dx = dx_cells * f32::from(dpx);
         let dy = dy_cells * f32::from(dpy);
         let dt = press.started.elapsed().as_secs_f32() - atlas.drag_clock;

@@ -526,6 +526,8 @@ impl App {
             | MouseTarget::LyricsDelayLater { .. }
             | MouseTarget::LyricsDelayBlock) => self.on_lyrics_mouse_target(target),
             MouseTarget::ContextMenuItem(_) => Vec::new(),
+            // Atlas targets need the pressed cell and are routed before this dispatcher.
+            MouseTarget::Atlas(_) => Vec::new(),
             target @ (MouseTarget::ToolSetupCopy
             | MouseTarget::ToolSetupGuide
             | MouseTarget::ToolSetupRetry

@@ -116,6 +116,7 @@ pub(super) fn app_msg_policy(msg: &Msg) -> EventPolicy {
             crate::tools::ToolsEvent::Installed { .. } | crate::tools::ToolsEvent::Failed { .. },
         )
         | Msg::YtdlpHealResult { .. }
+        | Msg::Atlas(_)
         | Msg::Transfer(
             crate::transfer::actor::TransferEvent::AuthUrl(_)
             | crate::transfer::actor::TransferEvent::AuthDone { .. }
