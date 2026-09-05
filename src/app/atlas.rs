@@ -948,9 +948,9 @@ impl App {
         press.moved = true;
         press.col = col;
         press.row = row;
-        let (dpx, dpy) = geom.dots_per_cell();
-        let dx = dx_cells * dpx;
-        let dy = -dy_cells * dpy;
+        let (dpx, dpy) = self.atlas_renderer().dots_per_cell();
+        let dx = dx_cells * f32::from(dpx);
+        let dy = -dy_cells * f32::from(dpy);
         let dt = press.started.elapsed().as_secs_f32() - atlas.drag_clock;
         atlas.drag_clock += dt;
         let clock = atlas.drag_clock;

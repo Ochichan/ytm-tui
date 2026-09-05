@@ -38,11 +38,13 @@ impl LatLon {
 
 /// Wrap a longitude in degrees into (−180, 180].
 pub fn wrap_longitude(lon: f32) -> f32 {
-    let mut w = (lon + 180.0) % 360.0;
-    if w < 0.0 {
+    let mut w = lon % 360.0;
+    if w > 180.0 {
+        w -= 360.0;
+    } else if w <= -180.0 {
         w += 360.0;
     }
-    w - 180.0
+    w
 }
 
 /// Something that answers "is there land here?" for a coordinate. The land mask
