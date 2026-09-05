@@ -352,6 +352,10 @@ pub struct PackedCell {
 pub fn pack(geom: &Geometry, grid: &DotGrid, renderer: Renderer) -> Vec<PackedCell> {
     debug_assert_eq!(grid.w, geom.w);
     debug_assert_eq!(grid.h, geom.h);
+    debug_assert_eq!(
+        renderer, geom.renderer,
+        "pack renderer must match the geometry's"
+    );
     match renderer {
         Renderer::Braille => pack_braille(geom, grid),
         Renderer::Ascii => pack_ascii(geom, grid),
@@ -458,9 +462,14 @@ pub struct MarkerCell {
     pub depth: f32,
 }
 
+/// One aggregated entry per occupied cell, in first-seen order. A rect-sized slot table
+/// keeps this linear in the marker count: the catalog can hold thousands of stations and this
+/// runs on every drawn frame.
 pub fn project_markers(geom: &Geometry, cam: &Camera, markers: &[Marker]) -> Vec<MarkerCell> {
     let frame = cam.frame();
     let mut cells = Vec::new();
+    let width = usize::from(geom.rect.width);
+    let mut slots: Vec<u32> = vec![u32::MAX; width * usize::from(geom.rect.height)];
     for marker in markers {
         let (nx, ny, depth) = project_with_frame(marker.unit, frame);
         if !depth.is_finite() || depth < 0.0 {
@@ -469,10 +478,9 @@ pub fn project_markers(geom: &Geometry, cam: &Camera, markers: &[Marker]) -> Vec
         let Some((col, row)) = geom.disc_to_cell(nx, ny) else {
             continue;
         };
-        if let Some(cell) = cells
-            .iter_mut()
-            .find(|cell: &&mut MarkerCell| cell.col == col && cell.row == row)
-        {
+        let slot = usize::from(row - geom.rect.y) * width + usize::from(col - geom.rect.x);
+        if slots[slot] != u32::MAX {
+            let cell: &mut MarkerCell = &mut cells[slots[slot] as usize];
             cell.count = cell.count.saturating_add(1);
             if marker.kind > cell.kind || (marker.kind == cell.kind && depth > cell.depth) {
                 cell.kind = marker.kind;
@@ -480,6 +488,7 @@ pub fn project_markers(geom: &Geometry, cam: &Camera, markers: &[Marker]) -> Vec
                 cell.depth = depth;
             }
         } else {
+            slots[slot] = cells.len() as u32;
             cells.push(MarkerCell {
                 col,
                 row,
@@ -780,5 +789,37 @@ mod tests {
         }
         measurements.sort_by(f64::total_cmp);
         measurements[measurements.len() / 2]
+    }
+
+    #[test]
+    fn trig_luts_track_libm_within_a_fiftieth_of_a_degree() {
+        let luts = trig_luts();
+        let mut worst_atan = 0.0_f32;
+        for step in 0..720 {
+            let angle = step as f32 * std::f32::consts::PI / 360.0 - std::f32::consts::PI;
+            for radius in [0.05_f32, 0.7, 1.0] {
+                let (y, x) = (radius * angle.sin(), radius * angle.cos());
+                let diff = (fast_atan2(y, x, luts) - y.atan2(x)).abs();
+                let diff = diff.min((diff - 2.0 * std::f32::consts::PI).abs());
+                worst_atan = worst_atan.max(diff);
+            }
+        }
+        assert!(
+            worst_atan.to_degrees() < 0.02,
+            "atan2 worst error {}°",
+            worst_atan.to_degrees()
+        );
+        let mut worst_asin = 0.0_f32;
+        let h = 2.0 / ASIN_SEGMENTS as f32;
+        let mut v = -1.0 + 2.0 * h;
+        while v <= 1.0 - 2.0 * h {
+            worst_asin = worst_asin.max((fast_asin(v, luts) - v.asin()).abs());
+            v += 0.001;
+        }
+        assert!(
+            worst_asin.to_degrees() < 0.02,
+            "asin worst error {}°",
+            worst_asin.to_degrees()
+        );
     }
 }

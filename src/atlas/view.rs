@@ -124,6 +124,10 @@ pub const KINETIC_MAX_SPEED: f32 = 2400.0;
 pub const KINETIC_DECELERATION: f32 = 1800.0;
 pub const KINETIC_MAX_FRAME: f32 = 0.1;
 
+/// Pointer velocity in dots per second. Convention shared with [`VelocityTracker::record`]
+/// and [`Camera::rotate_by`] callers: `vx` grows to the right, `vy` grows **downward**
+/// (terminal rows), and rotation is applied so the point under the pointer follows it —
+/// a downward fling raises the centre latitude, a rightward fling lowers the longitude.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Kinetic {
     pub vx: f32,
@@ -226,8 +230,6 @@ impl VelocityTracker {
 
     /// Records a displacement ending at `at`, in seconds from a caller-owned monotonic epoch.
     pub fn record(&mut self, dx: f32, dy: f32, dt: f32, at: f32) {
-        self.samples
-            .retain(|sample| at - sample.at <= VELOCITY_WINDOW);
         if !dx.is_finite()
             || !dy.is_finite()
             || !dt.is_finite()
@@ -237,6 +239,8 @@ impl VelocityTracker {
         {
             return;
         }
+        self.samples
+            .retain(|sample| at - sample.at <= VELOCITY_WINDOW);
 
         let instant_vx = dx / dt;
         let instant_vy = dy / dt;
@@ -378,5 +382,24 @@ mod tests {
         assert_eq!(tracker.release(0.131), (0.0, 0.0));
         tracker.record(1_000.0, 0.0, 0.3, 0.4);
         assert_eq!(tracker.release(0.4), (0.0, 0.0));
+    }
+
+    #[test]
+    fn coast_moves_the_point_under_the_pointer_with_the_fling() {
+        let mut cam = Camera::new();
+        cam.focus(LatLon::new(0.0, 0.0));
+        let anchor = LatLon::new(0.0, 0.0).to_unit();
+        // Fling right: the anchor must move right on screen (x grows).
+        let mut k = Kinetic::launch(600.0, 0.0).expect("launches");
+        k.step(&mut cam, 0.05, 100.0);
+        let (x, _, _) = cam.project_unit(anchor);
+        assert!(x > 0.0, "rightward fling moved the anchor to x={x}");
+        // Fling down (rows grow): the anchor must move down on screen (y shrinks).
+        let mut cam = Camera::new();
+        cam.focus(LatLon::new(0.0, 0.0));
+        let mut k = Kinetic::launch(0.0, 600.0).expect("launches");
+        k.step(&mut cam, 0.05, 100.0);
+        let (_, y, _) = cam.project_unit(anchor);
+        assert!(y < 0.0, "downward fling moved the anchor to y={y}");
     }
 }
