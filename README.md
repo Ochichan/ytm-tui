@@ -192,7 +192,7 @@ Actual cover images drawn right in the terminal (Kitty/Sixel/iTerm2, auto-detect
 
 ### Radio mode — and it knows the song
 
-**`Alt+Shift+R`** turns the whole app into an internet-radio tuner; press **`i`** and Gemini names what's playing on the live stream, **`f`** favorites it.
+**`Alt+Shift+R`** turns the whole app into an internet-radio tuner; press **`i`** and Gemini names what's playing on the live stream, **`f`** favorites it. Press **`a`** for **Atlas**: a rotatable, zoomable globe of live stations drawn in Braille dots — drag, flick, wheel, click a signal to tune, click a country to browse — with no image protocol required.
 
 ![Radio mode as an internet-radio tuner](docs/media/radio.png)
 > 🖼️ *GIF coming soon.*
@@ -599,3 +599,5 @@ instead of a public issue — supported versions and artifact verification live 
 🙏 Huge thanks to **[@ZZNN75](https://github.com/ZZNN75)** for the real QA hours — the rough edges you *won't* hit are smooth because they hit them first. 🫡
 
 MIT. Fork it, ship it, do whatever you want.
+
+The Atlas globe's coastlines come from [Natural Earth](https://www.naturalearthdata.com/) (public domain), via the polygon set curated by [omarchy-radio-atlas](https://github.com/AksharP5/omarchy-radio-atlas) (MIT), whose globe interaction model Atlas follows. Station listings come from the community-run [Radio Browser](https://www.radio-browser.info/).

@@ -192,7 +192,7 @@ audio-output.png · retro.png · transfer.gif · help.png · onboarding.gif · c
 
 ### ラジオモード — いま流れている曲まで分かる
 
-**`Alt+Shift+R`** はアプリ全体をネットラジオのチューナーに変えます。**`i`** を押せば Gemini が生放送でいま流れている曲名を教えてくれて、**`f`** でそのままお気に入りに。
+**`Alt+Shift+R`** はアプリ全体をネットラジオのチューナーに変えます。**`i`** を押せば Gemini が生放送でいま流れている曲名を教えてくれて、**`f`** でそのままお気に入りに。**`a`** で**アトラス**: 点字ドットで描いた、回してズームできるライブ局の地球儀 — ドラッグ・弾き・ホイール、点をクリックして再生、国をクリックして探索 — 画像プロトコル不要です。
 
 ![ネットラジオのチューナーになったラジオモード](docs/media/radio.png)
 > 🖼️ *GIF 準備中.*
@@ -582,3 +582,5 @@ ytt data import <FILE> --apply              # 原子的に適用
 🙏 **[@ZZNN75](https://github.com/ZZNN75)** さんへ、本物の QA 時間に大きな感謝を — あなたが*出会わない*粗い角は、この方が先にぶつかってくれたから滑らかなのです。🫡
 
 MIT。フォークして、出荷して、好きにどうぞ。
+
+アトラス地球儀の海岸線は [Natural Earth](https://www.naturalearthdata.com/)（パブリックドメイン）のデータを [omarchy-radio-atlas](https://github.com/AksharP5/omarchy-radio-atlas)（MIT）が整理したポリゴンとして使用し、地球儀の操作モデルもそのプロジェクトに倣っています。局のリストはコミュニティ運営の [Radio Browser](https://www.radio-browser.info/) から取得します。
