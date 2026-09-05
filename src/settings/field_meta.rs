@@ -8,6 +8,7 @@ use super::{Field, FieldKind, freq_label};
 impl Field {
     pub fn kind(self) -> FieldKind {
         match self {
+            Field::Atlas(field) => field.kind(),
             Field::CookiesFile
             | Field::DownloadDir
             | Field::LocalMusicRoot
@@ -177,6 +178,7 @@ impl Field {
 
     pub fn label(self) -> String {
         match self {
+            Field::Atlas(field) => field.label(),
             Field::BeginnerMode => t!("Beginner Mode", "비기너 모드", "ビギナーモード").to_owned(),
             Field::Language => t!("Language", "언어", "言語").to_owned(),
             Field::SearchSource => t!("Search source", "검색 소스", "検索ソース").to_owned(),

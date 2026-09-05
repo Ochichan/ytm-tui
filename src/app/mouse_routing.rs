@@ -470,6 +470,9 @@ impl App {
             if matches!(&region.target, MouseTarget::Global(Action::WhyAi)) {
                 self.interaction.why_gem_click = Some((col, row));
             }
+            if let MouseTarget::Atlas(target) = region.target {
+                return self.atlas_mouse_target(target, col, row);
+            }
             // Ctrl/Cmd+click on a list row toggles it in/out of the multi-selection.
             if multi && let MouseTarget::ListRow(i) = region.target {
                 match self.mode {

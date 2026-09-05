@@ -121,6 +121,7 @@ impl App {
             autoplay_on_start: self.config.effective_autoplay_on_start(),
             enqueue_next: self.config.effective_enqueue_next(),
             update_check_enabled: self.config.update_check_enabled,
+            atlas: self.config.atlas.clone(),
             speed: self.playback.speed,
             seek_seconds: self.audio.seek_seconds,
             big_text: self.config.effective_text_zoom() > 100,
@@ -542,6 +543,10 @@ impl App {
         };
         self.dirty = true;
         match field {
+            Field::Atlas(atlas_field) => {
+                atlas_field.step(&mut self.settings_mut().draft.atlas, dir);
+                Vec::new()
+            }
             Field::BeginnerMode => {
                 let s = self.settings_mut();
                 let was_enabled = s.draft.beginner_mode;

@@ -189,13 +189,16 @@ impl App {
             && self.queue.current().is_some();
         // The radio set piece sways on `master` alone (no per-effect flag), but only while
         // it is actually on screen — the album-art toggle hides it (`render_radio_filler`).
+        // Atlas hides the set piece entirely, so its sway must not keep the clock awake.
         let radio_art_running = player_running
             && self.radio_dedicated_mode
             && self.config.effective_album_art()
-            && a.master;
+            && a.master
+            && !self.radio_mode.atlas.open;
         let player_effect_running = player_running && self.player_animation_config_active(a);
         let running = player_effect_running
             || radio_art_running
+            || self.atlas_motion_active()
             || self.ai_mascot_active()
             || self.fx_active()
             || self.ambient_animation_running()
@@ -332,9 +335,17 @@ impl App {
         if player_running && a.master && self.bridges.canvas_heavy_active.get() {
             return fps.min(20);
         }
+        // A coasting globe re-rasters every drawn frame; 20 fps keeps it fluid at a bounded cost
+        // whether or not a track is playing.
+        if self.atlas_motion_active() {
+            return fps.min(20);
+        }
         if player_running
             && (self.player_animation_config_active(a)
-                || (self.radio_dedicated_mode && self.config.effective_album_art() && a.master))
+                || (self.radio_dedicated_mode
+                    && self.config.effective_album_art()
+                    && a.master
+                    && !self.radio_mode.atlas.open))
         {
             return fps;
         }

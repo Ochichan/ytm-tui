@@ -142,6 +142,8 @@ mod audio_output_picker;
 pub use audio_output_picker::*;
 mod artist;
 mod artwork;
+pub mod atlas;
+pub use atlas::{AtlasFocus, AtlasMsg, AtlasState, AtlasTarget, PanelRows, PanelTab};
 mod clipboard;
 mod context_menu;
 pub use context_menu::*;

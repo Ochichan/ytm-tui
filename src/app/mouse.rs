@@ -227,6 +227,9 @@ impl App {
         if self.interaction.context_menu_press {
             return Vec::new();
         }
+        if let Some(cmds) = self.atlas_mouse_drag(col, row) {
+            return cmds;
+        }
         // Radio-recording slider scrub: a press that grabbed a bar track sets the value
         // continuously as the pointer moves (row ignored — grab and drag anywhere horizontally,
         // exactly like the seekbar). `recording_slider_set` dedupes and clamps.
@@ -338,6 +341,9 @@ impl App {
             self.interaction.ai_transcript_drag = None;
             return Vec::new();
         }
+        if let Some(cmds) = self.atlas_mouse_left_up() {
+            return cmds;
+        }
         let seek_cmds = self.commit_seekbar_scrub();
 
         if let Some(drag) = self.interaction.ai_transcript_drag.take() {
@@ -414,6 +420,9 @@ impl App {
         }
         if self.beginner_coach_hit(col, row) {
             return Vec::new();
+        }
+        if !ctrl && let Some(cmds) = self.atlas_mouse_scroll(up, col, row) {
+            return cmds;
         }
         // While the wheel-zoom lock is on, Ctrl+wheel degrades to a plain wheel scroll
         // (the whole point: modifier-assisted scrolling without accidental zooming);

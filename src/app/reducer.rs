@@ -114,6 +114,7 @@ impl App {
         // change the tier, so the wrapper's second sync would be redundant on this path.
         self.sync_ui_tier();
         self.advance_animation();
+        self.atlas_tick();
         if self.reconcile_lyrics_surface_at(Instant::now()) {
             self.dirty = true;
         }
@@ -1144,6 +1145,9 @@ impl App {
                 // tidy frame on blur, resume instantly on focus). The seekbar keeps advancing via
                 // `PlayerTimePos`, which is independent of this tick.
                 self.focused = f;
+                if !f {
+                    self.atlas_focus_lost();
+                }
                 self.dirty = true;
             }
             Msg::Player(pm) => return self.handle_player(pm),
@@ -1237,6 +1241,7 @@ impl App {
             Msg::UpdateChecked(status) => return self.handle_update_checked(status),
             Msg::Tools(event) => return self.handle_tools(event),
             Msg::Transfer(event) => return self.on_transfer_event(event),
+            Msg::Atlas(msg) => return self.on_atlas_msg(msg),
             Msg::Data(DataMsg::TransferPlaylistPersisted(result)) => {
                 let TransferPlaylistPersistence {
                     commit,

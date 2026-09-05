@@ -47,6 +47,7 @@ impl App {
         if tier != crate::ui::layout::UiTier::Mini {
             return;
         }
+        self.close_atlas();
         // Level-triggered, not edge-triggered: navigation inside the miniplayer re-focuses
         // inputs (`s` → Search focuses its box), which would re-suppress the typeable
         // globals the entry pass freed. The resets are cheap and idempotent.
