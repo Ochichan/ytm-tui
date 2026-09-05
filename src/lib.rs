@@ -8,6 +8,7 @@ pub mod ai;
 pub mod api;
 pub mod app;
 pub mod artwork;
+pub mod atlas;
 pub mod auth_cli;
 pub mod cli_capability;
 pub mod config;
