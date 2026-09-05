@@ -174,6 +174,21 @@ fn country_code_str(code: &[u8; 2]) -> &str {
     std::str::from_utf8(code).unwrap_or("--")
 }
 
+/// A radio `Song` carries `rad:<uuid>` as its id; the catalog is keyed by the bare uuid.
+fn song_uuid(video_id: &str) -> &str {
+    video_id
+        .strip_prefix(crate::search_source::SearchSource::RadioBrowser.id_prefix())
+        .and_then(|rest| rest.strip_prefix(':'))
+        .unwrap_or(video_id)
+}
+
+fn song_video_id(uuid: &str) -> String {
+    format!(
+        "{}:{uuid}",
+        crate::search_source::SearchSource::RadioBrowser.id_prefix()
+    )
+}
+
 impl App {
     /// Whether the Atlas surface owns the Player content area right now.
     pub fn atlas_active(&self) -> bool {
@@ -294,8 +309,6 @@ impl App {
         self.dirty = true;
     }
 
-    // ---- geometry helpers -------------------------------------------------------------
-
     fn atlas_globe_rect(&self) -> Option<CellRect> {
         self.bridges.atlas_globe.get()
     }
@@ -315,7 +328,7 @@ impl App {
         atlas
             .catalog
             .markers(atlas.selected, atlas.highlight, &|uuid: &str| {
-                library.is_radio_favorite(uuid)
+                library.is_radio_favorite(&song_video_id(uuid))
             })
     }
 
@@ -367,8 +380,6 @@ impl App {
         }
         text
     }
-
-    // ---- keys ----------------------------------------------------------------------------
 
     pub(in crate::app) fn on_key_atlas(&mut self, k: KeyEvent) -> Vec<Cmd> {
         let chord = Chord::from(k);
@@ -687,7 +698,7 @@ impl App {
                     .radio_favorites
                     .iter()
                     .chain(self.library.radios.iter())
-                    .find(|s| s.video_id.as_str() == &**uuid)
+                    .find(|s| song_uuid(&s.video_id) == &**uuid)
                     .cloned()
             {
                 self.atlas_toast(format!("{} {}", t!("Tuning", "재생", "再生"), song.title));
@@ -815,7 +826,10 @@ impl App {
         if !current.is_radio_station() {
             return None;
         }
-        self.radio_mode.atlas.catalog.index_of(&current.video_id)
+        self.radio_mode
+            .atlas
+            .catalog
+            .index_of(song_uuid(&current.video_id))
     }
 
     /// Tune a catalog station through the ordinary radio playback path.
@@ -826,7 +840,7 @@ impl App {
         let already = self
             .queue
             .current()
-            .is_some_and(|c| c.video_id.as_str() == &*st.uuid);
+            .is_some_and(|c| song_uuid(&c.video_id) == &*st.uuid);
         let atlas = &mut self.radio_mode.atlas;
         atlas.selected = Some(idx);
         atlas.highlight = None;
@@ -857,10 +871,14 @@ impl App {
             return;
         };
         let wanted = self.radio_mode.atlas.follow_uuid.as_deref();
-        if wanted != Some(current.video_id.as_str()) {
+        if wanted != Some(song_uuid(&current.video_id)) {
             return;
         }
-        if let Some(idx) = self.radio_mode.atlas.catalog.index_of(&current.video_id)
+        if let Some(idx) = self
+            .radio_mode
+            .atlas
+            .catalog
+            .index_of(song_uuid(&current.video_id))
             && let Some(st) = self.radio_mode.atlas.catalog.get(idx)
         {
             let pos = st.pos;
@@ -871,8 +889,6 @@ impl App {
         self.radio_mode.atlas.follow_uuid = None;
         self.dirty = true;
     }
-
-    // ---- mouse ---------------------------------------------------------------------------
 
     pub(in crate::app) fn atlas_mouse_target(
         &mut self,
@@ -1033,8 +1049,6 @@ impl App {
         }
     }
 
-    // ---- ticks ---------------------------------------------------------------------------
-
     /// Advance coast / autorotate by the wall-clock time since the last tick.
     pub(in crate::app) fn atlas_tick(&mut self) {
         if !self.atlas_motion_active() {
@@ -1077,8 +1091,6 @@ impl App {
         }
     }
 
-    // ---- fetch events --------------------------------------------------------------------
-
     pub(in crate::app) fn on_atlas_msg(&mut self, msg: AtlasMsg) -> Vec<Cmd> {
         match msg {
             AtlasMsg::Event(event) => self.on_atlas_event(event),
@@ -1115,6 +1127,7 @@ impl App {
                 page,
                 rows,
                 from_cache,
+                refreshing,
                 ..
             } => {
                 let converted = Self::atlas_convert(rows);
@@ -1123,17 +1136,21 @@ impl App {
                 if !from_cache {
                     atlas.pages_fetched = atlas.pages_fetched.max(page + 1);
                 }
-                atlas.loading = false;
+                atlas.loading = refreshing;
                 atlas.error = None;
                 let limit = self.config.atlas.effective_station_limit();
                 let atlas = &mut self.radio_mode.atlas;
-                if !from_cache
+                // Progressive loading continues once no network refresh is pending, whether the
+                // page came from the directory or from a fresh cache.
+                if !refreshing
                     && (atlas.catalog.len() as u32) < limit
-                    && atlas.pages_fetched <= MAX_MORE_PAGES
+                    && atlas.pages_fetched < MAX_MORE_PAGES
                 {
                     atlas.loading = true;
+                    let page = atlas.pages_fetched.max(1);
                     cmds.push(Cmd::Atlas(AtlasCmd::More {
                         generation: atlas.generation,
+                        page,
                         limit: WORLD_PAGE,
                     }));
                 }
@@ -1210,14 +1227,14 @@ impl App {
                     self.library
                         .radio_favorites
                         .iter()
-                        .map(|s| Box::from(s.video_id.as_str()))
+                        .map(|s| Box::from(song_uuid(&s.video_id)))
                         .collect(),
                 ),
                 PanelTab::Recent => PanelRows::Library(
                     self.library
                         .radios
                         .iter()
-                        .map(|s| Box::from(s.video_id.as_str()))
+                        .map(|s| Box::from(song_uuid(&s.video_id)))
                         .collect(),
                 ),
             }

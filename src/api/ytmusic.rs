@@ -15,6 +15,7 @@ use ytmapi_rs::YtMusic;
 use ytmapi_rs::auth::BrowserToken;
 use ytmapi_rs::common::{VideoID, YoutubeID};
 
+use super::radio_browser::parse_radio_station;
 use super::{PlayableRef, Song};
 use crate::search_source::{SearchConfig, SearchSource};
 use crate::streaming::{self, StreamingConfig, StreamingMode};
@@ -88,7 +89,7 @@ fn mark_auth_search_healthy() {
 }
 
 const PROVIDER_SEARCH_TIMEOUT: Duration = Duration::from_secs(12);
-pub(super) const PROVIDER_JSON_MAX: usize = 2 * 1024 * 1024;
+const PROVIDER_JSON_MAX: usize = 2 * 1024 * 1024;
 const YTDLP_SEARCH_TIMEOUT: Duration = Duration::from_secs(12);
 const YTDLP_JSON_MAX: usize = 2 * 1024 * 1024;
 /// Flat playlist extraction budget: hundreds of entries and a slower endpoint than a
@@ -986,7 +987,7 @@ async fn lookup_video_song(video_id: &str) -> Song {
     }
 }
 
-pub(super) fn json_string(json: &serde_json::Value, keys: &[&str]) -> Option<String> {
+fn json_string(json: &serde_json::Value, keys: &[&str]) -> Option<String> {
     keys.iter()
         .find_map(|key| json.get(key).and_then(serde_json::Value::as_str))
         .map(str::to_owned)
@@ -1257,7 +1258,7 @@ async fn radio_browser_search(query: &str, limit: usize) -> Result<Vec<Song>> {
     Ok(entries.iter().filter_map(parse_radio_station).collect())
 }
 
-pub fn provider_client() -> Result<reqwest::Client> {
+fn provider_client() -> Result<reqwest::Client> {
     reqwest::Client::builder()
         .timeout(PROVIDER_SEARCH_TIMEOUT)
         .user_agent(format!("yututui/{}", env!("CARGO_PKG_VERSION")))
@@ -1364,8 +1365,6 @@ fn parse_jamendo_track(e: &serde_json::Value) -> Option<Song> {
         PlayableRef::JamendoTrackId { id, url },
     ))
 }
-
-use super::radio_browser::parse_radio_station;
 
 async fn archive_audio_file(
     client: &reqwest::Client,

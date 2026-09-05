@@ -36,6 +36,11 @@ impl App {
         // leftover `Info` color from a previous green toast.
         self.status.kind = StatusKind::Error;
         let mut cmds = self.dispatch(msg);
+        // A tuned station becomes `queue.current()` only once the player admits the batch,
+        // which lands as its own message; centre the globe on it then, not at tune time.
+        if self.radio_mode.atlas.follow_uuid.is_some() {
+            self.atlas_follow_playing_now();
+        }
         cmds.extend(self.start_pending_sync_ui_refresh());
         // A refill is scoped to the exact queue membership/order snapshot it started from.
         // Observe revisions after every owner reduction so an admitted manual replacement cannot

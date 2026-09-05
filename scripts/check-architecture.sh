@@ -311,6 +311,7 @@ for file in \
   src/ai/actor.rs \
   src/artwork.rs \
   src/lyrics.rs \
+  src/atlas/fetch.rs \
   src/transfer/actor.rs \
   src/scrobble/actor.rs \
   src/scrobble/mod.rs \

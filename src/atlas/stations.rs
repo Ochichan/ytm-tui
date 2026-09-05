@@ -2,7 +2,7 @@
 
 use std::collections::{HashMap, HashSet, VecDeque};
 
-use super::{LatLon, Marker, MarkerKind};
+use super::{LatLon, Marker, MarkerKind, wrap_longitude};
 use crate::api::Song;
 use crate::api::radio_browser::RadioStation;
 
@@ -112,6 +112,7 @@ impl<'de> serde::Deserialize<'de> for AtlasStation {
             pos: LatLon::new(row.pos[0], row.pos[1]),
             estimated: row.estimated,
             unit: [0.0; 3],
+            search_key: Box::from(""),
         };
         station.finish();
         Ok(station)
@@ -135,11 +136,27 @@ pub struct AtlasStation {
     pub pos: LatLon,
     pub estimated: bool,
     pub unit: [f32; 3],
+    /// Lower-cased `name / country / cc / state / language / tags / codec`, built once so a
+    /// keystroke in the search box does not re-lowercase every field of every station.
+    pub search_key: Box<str>,
 }
 
 impl AtlasStation {
     pub fn finish(&mut self) {
+        self.pos.lon = wrap_longitude(self.pos.lon);
         self.unit = self.pos.to_unit();
+        self.search_key = [
+            self.name.as_ref(),
+            self.country.as_ref(),
+            std::str::from_utf8(&self.country_code).unwrap_or(""),
+            self.state.as_ref(),
+            self.language.as_ref(),
+            self.tags.as_ref(),
+            self.codec.as_ref(),
+        ]
+        .join("\n")
+        .to_lowercase()
+        .into();
     }
 
     pub fn from_radio(r: RadioStation, est: &dyn LocationEstimator) -> Option<Self> {
@@ -164,6 +181,7 @@ impl AtlasStation {
             pos,
             estimated,
             unit: [0.0; 3],
+            search_key: Box::from(""),
         })
         .map(|mut station| {
             station.finish();
@@ -213,18 +231,7 @@ impl AtlasStation {
     }
 
     pub fn matches(&self, needle_lower: &str) -> bool {
-        let cc = String::from_utf8_lossy(&self.country_code).to_lowercase();
-        [
-            self.name.as_ref(),
-            self.country.as_ref(),
-            cc.as_str(),
-            self.state.as_ref(),
-            self.language.as_ref(),
-            self.tags.as_ref(),
-            self.codec.as_ref(),
-        ]
-        .iter()
-        .any(|haystack| haystack.to_lowercase().contains(needle_lower))
+        self.search_key.contains(needle_lower)
     }
 }
 
@@ -400,13 +407,14 @@ impl Catalog {
             rng ^= rng << 17;
             rng
         };
-        for _ in 0..self.stations.len() {
-            let index = (next() as usize) % self.stations.len();
-            if !recent.contains(&self.stations[index].uuid) {
-                return Some(index);
-            }
-        }
-        Some((next() as usize) % self.stations.len())
+        // A random start, then the first non-recent station scanning forward: always avoids
+        // the recent set when any alternative exists, and stays deterministic for a seed.
+        let len = self.stations.len();
+        let start = (next() as usize) % len;
+        (0..len)
+            .map(|offset| (start + offset) % len)
+            .find(|&index| !recent.contains(&self.stations[index].uuid))
+            .or(Some(start))
     }
 
     /// The visible station closest to the view axis (greatest depth), preferring one other
@@ -473,6 +481,7 @@ mod tests {
             pos: LatLon::new(lat, lon),
             estimated: false,
             unit: [0.0; 3],
+            search_key: Box::from(""),
         };
         s.finish();
         s

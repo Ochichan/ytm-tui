@@ -352,7 +352,7 @@ fn render_panel(frame: &mut Frame, app: &App, area: Rect) {
                 Some((
                     st.name.to_string(),
                     st.meta_line(),
-                    app.library.is_radio_favorite(&st.uuid),
+                    app.library.is_radio_favorite(&st.to_song().video_id),
                 ))
             }),
         ),
@@ -365,11 +365,11 @@ fn render_panel(frame: &mut Frame, app: &App, area: Rect) {
                     .radio_favorites
                     .iter()
                     .chain(app.library.radios.iter())
-                    .find(|s| s.video_id.as_str() == &**uuid)?;
+                    .find(|s| s.video_id.ends_with(&**uuid))?;
                 Some((
                     song.title.clone(),
                     song.artist.clone(),
-                    app.library.is_radio_favorite(uuid),
+                    app.library.is_radio_favorite(&song.video_id),
                 ))
             }),
         ),

@@ -30,10 +30,42 @@ fn collapse_whitespace(raw: &str) -> String {
         .join(" ")
 }
 
+/// A station uuid that is safe to embed in a URL path and to key the catalog by.
+pub fn is_valid_uuid(uuid: &str) -> bool {
+    !uuid.is_empty()
+        && uuid.len() <= 64
+        && uuid
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+}
+
+/// A uuid worth asking the directory about: real station ids are 36-char UUIDs, so a short
+/// token is never resolvable and would only waste a request.
+pub fn is_directory_uuid(uuid: &str) -> bool {
+    is_valid_uuid(uuid) && uuid.len() >= 20
+}
+
+/// Exactly two ASCII letters, upper-cased; anything else (three-letter codes, blanks,
+/// digits) is "unknown" — guessing a two-letter prefix would place stations on the wrong
+/// continent.
+pub fn normalize_country_code(raw: &str) -> String {
+    let trimmed = raw.trim();
+    if trimmed.len() == 2 && trimmed.chars().all(|c| c.is_ascii_alphabetic()) {
+        trimmed.to_ascii_uppercase()
+    } else {
+        String::new()
+    }
+}
+
+/// Community-supplied text reaches the panel and toasts directly, so it goes through the
+/// same forbidden-character scrub as every other provider's metadata before whitespace is
+/// collapsed and the length capped.
 fn text_value(e: &Value, key: &str, max_chars: usize, fallback: Option<&str>) -> Option<String> {
     match e.get(key).and_then(Value::as_str) {
         Some(raw) => {
-            let collapsed = collapse_whitespace(raw);
+            let spaced = raw.replace(['\t', '\n', '\r'], " ");
+            let scrubbed = super::sanitize_metadata_text(&spaced, max_chars);
+            let collapsed = collapse_whitespace(&scrubbed);
             let text = collapsed.chars().take(max_chars).collect::<String>();
             if text.is_empty() {
                 fallback.map(str::to_owned)
@@ -84,7 +116,8 @@ impl RadioStation {
         let uuid = e
             .get("stationuuid")
             .and_then(Value::as_str)
-            .filter(|id| !id.trim().is_empty())?
+            .map(str::trim)
+            .filter(|id| is_valid_uuid(id))?
             .to_owned();
         let raw_url = e
             .get("url_resolved")
@@ -107,20 +140,17 @@ impl RadioStation {
         let lon = f64_value(e, "geo_long")
             .filter(|lon| lon.is_finite() && (-180.0..=180.0).contains(lon))
             .map(|lon| lon as f32);
-        let (lat, lon) = if lat.is_some() && lon.is_some() {
-            (lat, lon)
-        } else {
-            (None, None)
+        // Null Island is how the directory spells "unknown" for some rows; treat it as missing
+        // so the station gets a country estimate instead of a marker in the Gulf of Guinea.
+        let (lat, lon) = match (lat, lon) {
+            (Some(lat), Some(lon)) if lat != 0.0 || lon != 0.0 => (Some(lat), Some(lon)),
+            _ => (None, None),
         };
-        let country_code = e
-            .get("countrycode")
-            .and_then(Value::as_str)
-            .unwrap_or_default()
-            .chars()
-            .filter(|c| c.is_ascii_alphabetic())
-            .map(|c| c.to_ascii_uppercase())
-            .take(2)
-            .collect::<String>();
+        let country_code = normalize_country_code(
+            e.get("countrycode")
+                .and_then(Value::as_str)
+                .unwrap_or_default(),
+        );
         Some(Self {
             uuid,
             name: text_value(e, "name", 160, Some("Unknown station"))?,
@@ -140,6 +170,32 @@ impl RadioStation {
             lat,
             lon,
         })
+    }
+
+    /// Whether a stored row still satisfies every rule `parse` enforces on network rows.
+    pub fn is_valid(&self) -> bool {
+        let coords_ok = match (self.lat, self.lon) {
+            (Some(lat), Some(lon)) => {
+                lat.is_finite()
+                    && lon.is_finite()
+                    && (-90.0..=90.0).contains(&lat)
+                    && (-180.0..=180.0).contains(&lon)
+            }
+            (None, None) => true,
+            _ => false,
+        };
+        is_valid_uuid(&self.uuid)
+            && coords_ok
+            && self.name.chars().count() <= 160
+            && self.country.chars().count() <= 100
+            && self.state.chars().count() <= 100
+            && self.language.chars().count() <= 120
+            && self.tags.chars().count() <= 500
+            && self.codec.chars().count() <= 32
+            && (self.country_code.is_empty()
+                || normalize_country_code(&self.country_code) == self.country_code)
+            && self.url.chars().count() <= 2048
+            && super::validate_playable_url(SearchSource::RadioBrowser, &self.url).is_ok()
     }
 
     pub fn into_song(self) -> Song {
@@ -201,10 +257,19 @@ impl RadioQuery {
         if uuids.is_empty() || uuids.len() > 100 {
             return None;
         }
-        let valid = uuids.iter().all(|uuid| {
-            uuid.len() >= 20 && uuid.chars().all(|c| c.is_ascii_hexdigit() || c == '-')
-        });
+        let valid = uuids.iter().all(|uuid| is_directory_uuid(uuid));
         valid.then_some(Self::ByUuid { uuids })
+    }
+
+    pub fn country(code: &str, limit: u32) -> Option<Self> {
+        let code = normalize_country_code(code);
+        (!code.is_empty()).then_some(Self::Country { code, limit })
+    }
+
+    pub fn click(uuid: &str) -> Option<Self> {
+        is_valid_uuid(uuid).then(|| Self::Click {
+            uuid: uuid.to_owned(),
+        })
     }
 
     pub fn path(&self) -> String {
@@ -212,7 +277,12 @@ impl RadioQuery {
             Self::World { .. } | Self::WorldMore { .. } | Self::Search { .. } => {
                 "/json/stations/search".to_owned()
             }
-            Self::Country { code, .. } => format!("/json/stations/bycountrycodeexact/{code}"),
+            Self::Country { code, .. } => {
+                format!(
+                    "/json/stations/bycountrycodeexact/{}",
+                    normalize_country_code(code)
+                )
+            }
             Self::ByUuid { .. } => "/json/stations/byuuid".to_owned(),
             Self::Click { uuid } => format!("/json/url/{uuid}"),
         }
@@ -360,7 +430,7 @@ mod tests {
             .unwrap()
             .insert("countrycode".into(), "usa".into());
         let station = RadioStation::parse(&v).unwrap();
-        assert_eq!(station.country_code, "US");
+        assert_eq!(station.country_code, "");
         assert_eq!(station.bitrate, 128);
     }
 

@@ -15,6 +15,7 @@ use crate::util::safe_fs;
 pub const ATLAS_JSON_MAX: usize = 4 * 1024 * 1024;
 pub const CACHE_TTL: Duration = Duration::from_secs(24 * 60 * 60);
 pub const MAX_CACHED_ROWS: usize = 5500;
+const REQUEST_DEADLINE: Duration = Duration::from_secs(60);
 
 const WAKE_QUEUE: QueuePolicy = QueuePolicy::CoalescedByKey {
     name: "atlas",
@@ -30,12 +31,30 @@ pub enum AtlasErrorKind {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum AtlasCmd {
-    World { generation: u64, limit: u32 },
-    More { generation: u64, limit: u32 },
-    Country { generation: u64, code: String },
-    Search { generation: u64, query: String },
-    Resolve { generation: u64, uuids: Vec<String> },
-    Click { uuid: String },
+    World {
+        generation: u64,
+        limit: u32,
+    },
+    More {
+        generation: u64,
+        page: u32,
+        limit: u32,
+    },
+    Country {
+        generation: u64,
+        code: String,
+    },
+    Search {
+        generation: u64,
+        query: String,
+    },
+    Resolve {
+        generation: u64,
+        uuids: Vec<String>,
+    },
+    Click {
+        uuid: String,
+    },
 }
 
 #[derive(Debug)]
@@ -45,6 +64,9 @@ pub enum AtlasEvent {
         page: u32,
         rows: Vec<RadioStation>,
         from_cache: bool,
+        /// A cached page that a network refresh will follow; the reducer waits for that
+        /// refresh before asking for more pages.
+        refreshing: bool,
     },
     Country {
         generation: u64,
@@ -68,6 +90,12 @@ pub enum AtlasEvent {
     },
 }
 
+/// Bounded click backlog: a burst of tunes keeps the newest few pings, never grows.
+const CLICK_BACKLOG: usize = 8;
+
+/// One pending slot per command kind (latest wins), plus the click backlog. Interactive
+/// kinds drain before the bulk world pages so a country browse never waits behind a 500-row
+/// fetch that was already queued.
 #[derive(Debug, Default)]
 struct PendingSet {
     world: Option<AtlasCmd>,
@@ -75,27 +103,40 @@ struct PendingSet {
     country: Option<AtlasCmd>,
     search: Option<AtlasCmd>,
     resolve: Option<AtlasCmd>,
+    clicks: std::collections::VecDeque<String>,
 }
 
 impl PendingSet {
-    fn slot_mut(&mut self, cmd: &AtlasCmd) -> &mut Option<AtlasCmd> {
-        match cmd {
+    /// Stores `cmd`; returns whether an older command of the same kind was replaced.
+    fn put(&mut self, cmd: AtlasCmd) -> bool {
+        let slot = match cmd {
+            AtlasCmd::Click { uuid } => {
+                if self.clicks.len() >= CLICK_BACKLOG {
+                    self.clicks.pop_front();
+                }
+                self.clicks.push_back(uuid);
+                return false;
+            }
             AtlasCmd::World { .. } => &mut self.world,
             AtlasCmd::More { .. } => &mut self.more,
             AtlasCmd::Country { .. } => &mut self.country,
             AtlasCmd::Search { .. } => &mut self.search,
             AtlasCmd::Resolve { .. } => &mut self.resolve,
-            AtlasCmd::Click { .. } => unreachable!("click is fire-and-forget"),
-        }
+        };
+        slot.replace(cmd).is_some()
     }
 
     fn take_next(&mut self) -> Option<AtlasCmd> {
-        self.world
+        self.country
             .take()
-            .or_else(|| self.more.take())
-            .or_else(|| self.country.take())
             .or_else(|| self.search.take())
             .or_else(|| self.resolve.take())
+            .or_else(|| self.world.take())
+            .or_else(|| self.more.take())
+    }
+
+    fn take_clicks(&mut self) -> Vec<String> {
+        self.clicks.drain(..).collect()
     }
 }
 
@@ -106,20 +147,13 @@ pub struct AtlasHandle {
 
 impl AtlasHandle {
     pub fn send(&self, cmd: AtlasCmd) -> DeliveryResult {
-        if matches!(cmd, AtlasCmd::Click { .. }) {
-            return self
-                .wake_tx
-                .try_send(())
-                .map_or(Err(DeliveryError::Closed), |_| {
-                    Ok(DeliveryReceipt::Enqueued)
-                });
-        }
         let mut latest = self
             .latest
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
-        let replaced_existing = latest.slot_mut(&cmd).replace(cmd).is_some();
+        let replaced_existing = latest.put(cmd);
         match self.wake_tx.try_send(()) {
+            // A full wake queue already guarantees the actor will inspect the set.
             Ok(()) | Err(mpsc::error::TrySendError::Full(())) if replaced_existing => {
                 Ok(DeliveryReceipt::Coalesced {
                     replaced_existing: true,
@@ -128,7 +162,7 @@ impl AtlasHandle {
             }
             Ok(()) | Err(mpsc::error::TrySendError::Full(())) => Ok(DeliveryReceipt::Enqueued),
             Err(mpsc::error::TrySendError::Closed(())) => {
-                latest.take_next();
+                *latest = PendingSet::default();
                 Err(DeliveryError::Closed)
             }
         }
@@ -158,19 +192,24 @@ where
 
     while wake_rx.recv().await.is_some() {
         loop {
-            let cmd = latest
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner)
-                .take_next();
-            let Some(cmd) = cmd else { break };
-            match cmd {
-                AtlasCmd::Click { uuid } => {
-                    if let Err(error) = request_click(&fast_client, &uuid).await {
+            let (cmd, clicks) = {
+                let mut set = latest
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner);
+                (set.take_next(), set.take_clicks())
+            };
+            // Clicks are fire-and-forget: each runs on its own task so a slow mirror never
+            // delays the listing work behind it.
+            for uuid in clicks {
+                let client = fast_client.clone();
+                tokio::spawn(async move {
+                    if let Err(error) = request_click(&client, &uuid).await {
                         tracing::debug!(%uuid, error = %format!("{error:#}"), "radio click failed");
                     }
-                }
-                other => handle_cmd(other, &fast_client, &slow_client, &emit).await,
+                });
             }
+            let Some(cmd) = cmd else { break };
+            handle_cmd(cmd, &fast_client, &slow_client, &emit).await;
         }
     }
 }
@@ -199,6 +238,7 @@ where
                         page: 0,
                         rows: rows.clone(),
                         from_cache: true,
+                        refreshing: !fresh,
                     });
                     if fresh {
                         return;
@@ -211,7 +251,7 @@ where
                     message: format!("{error:#}"),
                 }),
             }
-            match radio_browser::request(slow, &RadioQuery::World { limit }).await {
+            match request_bounded(slow, &RadioQuery::World { limit }).await {
                 Ok(json) => {
                     let rows = radio_browser::parse_station_list(&json, MAX_CACHED_ROWS);
                     store_rows(&cache::CacheKind::World, &rows);
@@ -220,6 +260,7 @@ where
                         page: 0,
                         rows,
                         from_cache: false,
+                        refreshing: false,
                     });
                 }
                 Err(error) => emit(AtlasEvent::Error {
@@ -229,28 +270,34 @@ where
                 }),
             }
         }
-        AtlasCmd::More { generation, limit } => {
-            match radio_browser::request(fast, &RadioQuery::WorldMore { limit }).await {
-                Ok(json) => {
-                    let page = u32::try_from(MAX_CACHED_ROWS / limit.max(1) as usize).unwrap_or(0);
-                    emit(AtlasEvent::World {
-                        generation,
-                        page,
-                        rows: radio_browser::parse_station_list(&json, MAX_CACHED_ROWS),
-                        from_cache: false,
-                    });
-                }
-                Err(error) => emit(AtlasEvent::Error {
+        AtlasCmd::More {
+            generation,
+            page,
+            limit,
+        } => match request_bounded(slow, &RadioQuery::WorldMore { limit }).await {
+            Ok(json) => {
+                emit(AtlasEvent::World {
                     generation,
-                    kind: AtlasErrorKind::Network,
-                    message: format!("{error:#}"),
-                }),
+                    page,
+                    rows: radio_browser::parse_station_list(&json, MAX_CACHED_ROWS),
+                    from_cache: false,
+                    refreshing: false,
+                });
             }
-        }
+            Err(error) => emit(AtlasEvent::Error {
+                generation,
+                kind: AtlasErrorKind::Network,
+                message: format!("{error:#}"),
+            }),
+        },
         AtlasCmd::Country { generation, code } => {
-            let query = RadioQuery::Country {
-                code: code.clone(),
-                limit: 500,
+            let Some(query) = RadioQuery::country(&code, 500) else {
+                emit(AtlasEvent::Error {
+                    generation,
+                    kind: AtlasErrorKind::InvalidData,
+                    message: format!("invalid country code {code:?}"),
+                });
+                return;
             };
             match cache::load(&cache::CacheKind::Country(&code)) {
                 Ok(Some(loaded)) => {
@@ -273,7 +320,7 @@ where
                     message: format!("{error:#}"),
                 }),
             }
-            match radio_browser::request(fast, &query).await {
+            match request_bounded(slow, &query).await {
                 Ok(json) => {
                     let rows = radio_browser::parse_station_list(&json, MAX_CACHED_ROWS);
                     store_rows(&cache::CacheKind::Country(&code), &rows);
@@ -296,7 +343,7 @@ where
                 name: query.clone(),
                 limit: 80,
             };
-            match radio_browser::request(fast, &q).await {
+            match request_bounded(fast, &q).await {
                 Ok(json) => emit(AtlasEvent::Search {
                     generation,
                     query,
@@ -311,11 +358,15 @@ where
         }
         AtlasCmd::Resolve { generation, uuids } => {
             let mut rows = Vec::new();
+            let uuids: Vec<String> = uuids
+                .into_iter()
+                .filter(|uuid| radio_browser::is_directory_uuid(uuid))
+                .collect();
             for chunk in uuids.chunks(100) {
                 let Some(query) = RadioQuery::by_uuid(chunk.to_vec()) else {
                     continue;
                 };
-                match radio_browser::request(fast, &query).await {
+                match request_bounded(fast, &query).await {
                     Ok(json) => {
                         rows.extend(radio_browser::parse_station_list(&json, MAX_CACHED_ROWS))
                     }
@@ -331,7 +382,19 @@ where
             }
             emit(AtlasEvent::Resolved { generation, rows });
         }
-        AtlasCmd::Click { .. } => unreachable!("handled in run_actor"),
+        AtlasCmd::Click { .. } => {}
+    }
+}
+
+/// Mirror fallback is bounded as a whole: a directory outage costs at most one minute of
+/// the actor's time, after which the interactive kinds get their turn.
+async fn request_bounded(
+    client: &reqwest::Client,
+    query: &RadioQuery,
+) -> anyhow::Result<serde_json::Value> {
+    match tokio::time::timeout(REQUEST_DEADLINE, radio_browser::request(client, query)).await {
+        Ok(result) => result,
+        Err(_) => anyhow::bail!("Radio Browser request timed out"),
     }
 }
 
@@ -342,13 +405,10 @@ fn store_rows(kind: &cache::CacheKind<'_>, rows: &[RadioStation]) {
 }
 
 async fn request_click(client: &reqwest::Client, uuid: &str) -> anyhow::Result<()> {
-    radio_browser::request(
-        client,
-        &RadioQuery::Click {
-            uuid: uuid.to_owned(),
-        },
-    )
-    .await?;
+    let Some(query) = RadioQuery::click(uuid) else {
+        anyhow::bail!("invalid station uuid");
+    };
+    request_bounded(client, &query).await?;
     Ok(())
 }
 
@@ -434,15 +494,19 @@ pub mod cache {
         if file.rows.len() > MAX_CACHED_ROWS {
             return Ok(None);
         }
+        // A cache file is user-writable data: re-validate every row exactly as a network row
+        // would be, dropping anything the parser would have rejected.
+        let rows: Vec<RadioStation> = file
+            .rows
+            .into_iter()
+            .filter(RadioStation::is_valid)
+            .collect();
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap_or_default()
             .as_secs();
         let fresh = now.saturating_sub(file.saved_unix) < CACHE_TTL.as_secs();
-        Ok(Some(Loaded {
-            rows: file.rows,
-            fresh,
-        }))
+        Ok(Some(Loaded { rows, fresh }))
     }
 
     #[cfg(test)]
