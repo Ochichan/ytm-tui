@@ -19,6 +19,7 @@ pub fn default_bindings() -> Vec<(KeyContext, Action, Chord)> {
         (C::Player, A::TogglePause, ch(' ')),
         (C::Player, A::ToggleRadioMode, alt_shift('r')),
         (C::Player, A::ToggleRecordings, alt_shift('e')),
+        (C::Player, A::ToggleAtlas, ch('a')),
         (C::Player, A::SeekBack, key(KeyCode::Left)),
         (C::Player, A::SeekForward, key(KeyCode::Right)),
         (C::Player, A::VolUp, key(KeyCode::Up)),
@@ -61,6 +62,30 @@ pub fn default_bindings() -> Vec<(KeyContext, Action, Chord)> {
         // deliberately mirror the player's favorite / DJ Gem keys.
         (C::NowPlaying, A::NowPlayingFavorite, ch('f')),
         (C::NowPlaying, A::NowPlayingAskAi, ch('g')),
+        // Atlas globe (radio): arrows rotate, so volume moves to PageUp/PageDown here.
+        // `h/l/k/j`, `=`, `Esc` and Shift+arrows are fixed aliases in the handler.
+        (C::Atlas, A::AtlasRotateLeft, key(KeyCode::Left)),
+        (C::Atlas, A::AtlasRotateRight, key(KeyCode::Right)),
+        (C::Atlas, A::AtlasRotateUp, key(KeyCode::Up)),
+        (C::Atlas, A::AtlasRotateDown, key(KeyCode::Down)),
+        (C::Atlas, A::AtlasZoomIn, ch('+')),
+        (C::Atlas, A::AtlasZoomOut, ch('-')),
+        (C::Atlas, A::AtlasResetView, ch('0')),
+        (C::Atlas, A::AtlasNextSignal, ch('n')),
+        (C::Atlas, A::AtlasPrevSignal, ch('p')),
+        (C::Atlas, A::AtlasActivate, key(KeyCode::Enter)),
+        (C::Atlas, A::AtlasBrowseCountry, ch('c')),
+        (C::Atlas, A::AtlasRandom, ch('r')),
+        (C::Atlas, A::AtlasFavorite, ch('f')),
+        (C::Atlas, A::AtlasGoToPlaying, ch('g')),
+        (C::Atlas, A::AtlasSearch, ch('/')),
+        (C::Atlas, A::AtlasFocusNext, key(KeyCode::Tab)),
+        (C::Atlas, A::AtlasFocusPrev, key(KeyCode::BackTab)),
+        (C::Atlas, A::AtlasToggleGrid, ch('G')),
+        (C::Atlas, A::AtlasToggleAutorotate, ch('R')),
+        (C::Atlas, A::VolUp, key(KeyCode::PageUp)),
+        (C::Atlas, A::VolDown, key(KeyCode::PageDown)),
+        (C::Atlas, A::AtlasClose, ch('q')),
         // External mpv video window controls. These are installed into mpv on the next
         // overlay open; compatibility aliases (`<`, `>`, `p`) stay fixed in video.rs.
         (C::MpvOverlay, A::VideoTogglePause, ch(' ')),

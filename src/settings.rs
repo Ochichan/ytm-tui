@@ -26,6 +26,8 @@ use crate::theme::{ThemeConfig, ThemeRole};
 use crate::util::text_edit::TextCursor;
 
 mod actions;
+mod atlas;
+pub use atlas::AtlasField;
 mod color_picker;
 mod display;
 mod field_meta;
@@ -155,11 +157,14 @@ impl SettingsTab {
                     // `SettingsState::fields` when not in radio mode. Keep it last in the
                     // "Now Playing" section so the static count below stays partition-correct.
                     Field::RadioRecording,
+                ];
+                f.extend(AtlasField::ALL.map(Field::Atlas));
+                f.extend([
                     Field::AudioBackend,
                     Field::AudioOutput,
                     Field::LongFormSeekOptimization,
                     Field::EqPreset,
-                ];
+                ]);
                 f.extend((0..eq::BANDS).map(Field::Band));
                 f.push(Field::Normalize);
                 f
@@ -265,7 +270,10 @@ fn playback_sections() -> Vec<(&'static str, usize)> {
         // 9 = the 8 Now-Playing controls + the radio-only recording entry. When not
         // in radio mode, `SettingsState::sections` decrements this back to 8 in
         // lockstep with `SettingsState::fields` hiding `RadioRecording`.
-        (t!("Now Playing", "현재 재생", "再生中"), 9),
+        (
+            t!("Now Playing", "현재 재생", "再生中"),
+            9 + AtlasField::ALL.len(),
+        ),
         (
             t!("Audio backend", "오디오 백엔드", "オーディオバックエンド"),
             3,
@@ -337,6 +345,8 @@ fn ai_sections() -> Vec<(&'static str, usize)> {
 /// One editable setting.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Field {
+    /// Atlas globe rows (Playback tab, radio mode only).
+    Atlas(AtlasField),
     // General
     /// Explanatory labels plus the interactive walkthrough on the next writable launch.
     BeginnerMode,
@@ -723,6 +733,7 @@ pub struct SettingsDraft {
     pub enqueue_next: bool,
     /// Whether the startup app-update check runs (the About-card update notice).
     pub update_check_enabled: bool,
+    pub atlas: crate::config::AtlasConfig,
     pub speed: f64,
     /// Seek step (seconds) for the seek-back/-forward keys.
     pub seek_seconds: f64,
@@ -854,6 +865,7 @@ impl SettingsDraft {
         cfg.album_art = Some(self.album_art);
         cfg.album_art_quality = self.album_art_quality;
         cfg.player_bar_position = Some(self.player_bar_position);
+        cfg.atlas = self.atlas.clone();
         cfg.autoplay_on_start = Some(self.autoplay_on_start);
         cfg.enqueue_next = Some(self.enqueue_next);
         cfg.speed = Some(self.speed);
@@ -993,7 +1005,7 @@ impl SettingsState {
             fields.retain(|field| *field != Field::ClearRomanizedTitleCache);
         }
         if self.tab == SettingsTab::Playback && !self.radio_mode {
-            fields.retain(|field| *field != Field::RadioRecording);
+            fields.retain(|field| !matches!(field, Field::RadioRecording | Field::Atlas(_)));
         }
         fields
     }
@@ -1009,7 +1021,7 @@ impl SettingsState {
             // `RadioRecording` lives in "Now Playing" (section 0); hidden outside radio mode.
             SettingsTab::Playback if !self.radio_mode => {
                 if let Some((_, n)) = sections.first_mut() {
-                    *n = n.saturating_sub(1);
+                    *n = n.saturating_sub(1 + AtlasField::ALL.len());
                 }
             }
             // `ClearRomanizedTitleCache` lives in "Assistant" (section 0); hidden in retro mode.
@@ -1041,7 +1053,7 @@ impl SettingsState {
     }
 }
 
-fn toggle_str(on: bool) -> String {
+pub(crate) fn toggle_str(on: bool) -> String {
     if on {
         "[x]".to_owned()
     } else {

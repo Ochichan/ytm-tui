@@ -227,6 +227,9 @@ impl App {
         if self.interaction.context_menu_press {
             return Vec::new();
         }
+        if let Some(cmds) = self.atlas_mouse_drag(col, row) {
+            return cmds;
+        }
         // Radio-recording slider scrub: a press that grabbed a bar track sets the value
         // continuously as the pointer moves (row ignored — grab and drag anywhere horizontally,
         // exactly like the seekbar). `recording_slider_set` dedupes and clamps.
@@ -337,6 +340,9 @@ impl App {
             self.cancel_seekbar_scrub();
             self.interaction.ai_transcript_drag = None;
             return Vec::new();
+        }
+        if let Some(cmds) = self.atlas_mouse_left_up() {
+            return cmds;
         }
         let seek_cmds = self.commit_seekbar_scrub();
 
@@ -468,6 +474,11 @@ impl App {
             self.queue_popup.scroll.wheel(up, n, self.queue.len());
             self.dirty = true;
             return Vec::new();
+        }
+        // Below every overlay that captures the wheel: a sheet drawn over the globe scrolls,
+        // the globe zooms only when it is the topmost surface under the pointer.
+        if !ctrl && let Some(cmds) = self.atlas_mouse_scroll(up, col, row) {
+            return cmds;
         }
         if self.search_filter.open && self.active_search_surface() != ActiveSearchSurface::Local {
             let len = self.search_filter.matches.len();

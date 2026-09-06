@@ -290,6 +290,14 @@ impl RuntimeHandles {
         }
     }
 
+    pub(super) fn dispatch_atlas(&mut self, app: &mut App, cmd: crate::atlas::fetch::AtlasCmd) {
+        let atlas_tx = self.worker_tx.clone();
+        let handle = self.atlas_handle.get_or_insert_with(|| {
+            crate::atlas::fetch::spawn(crate::runtime::sink(atlas_tx, RuntimeEvent::Atlas))
+        });
+        report_actor_delivery(app, "atlas", handle.send(cmd));
+    }
+
     pub(super) fn dispatch_transfer(
         &mut self,
         app: &mut App,

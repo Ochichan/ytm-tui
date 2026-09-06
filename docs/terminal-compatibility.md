@@ -39,6 +39,17 @@ ytm-tui configuration.
 | Bare Linux TTY | Fallback: retro ASCII or halfblocks | No for crossterm mouse capture | Limited by console font/input method | Yes | No | No | Recommend retro mode. |
 | Alacritty | Fallback: halfblocks; no native Sixel baseline | Expected | Expected | Yes | Expected on GUI OS with mpv | Unknown / likely No | Alacritty is a daily-driver beta model, but graphics support is deliberately conservative here. |
 
+## Atlas globe (radio mode)
+
+- The globe is never an image: it is packed into terminal cells from a dot raster, so it
+  follows the text path above rather than the album-art protocol. Braille (U+2800) is the
+  default; retro mode switches to a one-dot-per-cell ASCII renderer automatically, and
+  Settings → Playback → *Atlas renderer* → *ASCII* covers fonts that lack Braille coverage.
+- Marker glyphs stay within the CP437 repertoire in retro mode (`•`, `■`, `☼`, `○`, `♥`).
+- Drag, flick and click need the terminal's mouse reporting (the same requirement as the
+  rest of the app's mouse support); the wheel zooms. Every mouse gesture has a keyboard
+  equivalent, so terminals without mouse capture lose nothing but convenience.
+
 ## ytm-tui Detection Path
 
 - Interactive startup first verifies that stdin (or its controlling `/dev/tty`)

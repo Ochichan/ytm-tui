@@ -616,6 +616,9 @@ impl App {
     }
 
     pub(in crate::app) fn on_key_player(&mut self, k: KeyEvent) -> Vec<Cmd> {
+        if self.atlas_active() {
+            return self.on_key_atlas(k);
+        }
         match self.keymap.action(KeyContext::Player, k.into()) {
             Some(action) => self.on_player_action(action),
             None => Vec::new(),
@@ -630,6 +633,7 @@ impl App {
             }
             Action::Back | Action::Home => self.go_home(),
             Action::ToggleRadioMode => self.request_radio_mode_switch(),
+            Action::ToggleAtlas => self.toggle_atlas(),
             Action::TogglePause => {
                 if self.current_needs_load() {
                     return self.stay_on_current_track();

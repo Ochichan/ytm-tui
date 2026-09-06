@@ -4,6 +4,7 @@ impl SettingsDraft {
     /// Render the current value of `field` for display.
     pub fn value_display(&self, field: Field) -> String {
         match field {
+            Field::Atlas(field) => field.value_display(&self.atlas),
             Field::BeginnerMode
             | Field::Language
             | Field::CookiesFile

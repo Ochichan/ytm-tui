@@ -158,6 +158,18 @@ The best part: **press `i`** when a song catches your ear. A little card pops up
 
 There's also a recordings browser on **`Alt+Shift+E`**.
 
+### Atlas — the globe
+
+Press **`a`** (or click *Atlas globe* under the radio set piece) and the Player becomes a spinning globe of live stations, drawn right in your terminal with Braille dots — no image support needed, it works wherever the app does. Every dot is a station; the panel beside it lists what's in view.
+
+- **Drag** to rotate, **flick** to send it coasting (with animations on), **wheel** to zoom. Keyboard: arrows or `h j k l` rotate, `+`/`-` zoom, `0` resets.
+- **Click a dot** to tune it. **Click a country** (or press **`c`**) to browse its top stations — the country lights up.
+- **`n`** / **`p`** step through the stations in view, **`Enter`** tunes the highlighted one, **`r`** tunes a random station you haven't heard lately, **`g`** jumps back to the one playing, **`f`** favorites it.
+- **`/`** searches by name, country, language or tag; **`Tab`** moves between the globe and the list; **`G`** toggles the grid lines; **`R`** lets the globe turn by itself.
+- **`q`** or **`Esc`** closes the globe. Space, `m`, `,` and `.` keep controlling playback while it's open.
+
+Stations come from Radio Browser and are cached for a day. Some have no published coordinates; those get an approximate spot inside their country and say so. Settings → Playback has the Atlas options (renderer, how many stations to load, panel, coasting, grid, follow-playing, autorotate); pick the *ASCII* renderer if your font has no Braille.
+
 ---
 
 ## 4. Local Deck — your own music, beautifully

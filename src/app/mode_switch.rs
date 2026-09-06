@@ -82,6 +82,7 @@ impl App {
     }
 
     pub(in crate::app) fn activate_radio_dedicated_mode_ui(&mut self) {
+        self.close_atlas();
         self.radio_dedicated_mode = true;
         self.theme = self
             .radio_mode

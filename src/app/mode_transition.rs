@@ -267,6 +267,7 @@ impl App {
                 self.radio_mode.pending_radio_mode_confirm = None;
             }
             DedicatedModeSwitch::Radio(RadioModeConfirm::Exit) => {
+                self.close_atlas();
                 self.radio_mode.radio_mode_theme = Some(self.theme.clone());
                 self.radio_mode.radio_mode_queue = Some(plan.outgoing_queue.clone());
                 self.radio_dedicated_mode = false;

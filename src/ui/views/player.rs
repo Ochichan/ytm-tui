@@ -256,6 +256,12 @@ const MIN_LYRICS_ROWS: u16 = 3;
 /// layout; when artwork is unavailable, lyrics receive the whole filler.
 fn render_filler(frame: &mut Frame, app: &App, player_area: Rect, area: Rect) {
     app.art.rect.set(None);
+    // The globe owns the whole filler: no field effects underneath (its ocean cells are
+    // transparent) and no set piece.
+    if app.atlas_active() {
+        super::atlas::render(frame, app, area);
+        return;
+    }
     // The radio set piece rides the album-art toggle: with it off, radio mode falls
     // through to the plain music-mode arms below (`art_active()` is hard-false in radio
     // mode, so those resolve to the no-art layout — lyrics, or the bare animation canvas).
@@ -392,6 +398,20 @@ fn render_radio_filler(frame: &mut Frame, app: &App, area: Rect) {
                 );
             }
             if !app.lyrics.visible {
+                // The globe's entry point lives one row under the separator when there is room.
+                let button_y = separator_y.saturating_add(1);
+                if button_y < area.bottom() {
+                    super::atlas::render_open_button(
+                        frame,
+                        app,
+                        Rect {
+                            x: area.x,
+                            y: button_y,
+                            width: area.width,
+                            height: 1,
+                        },
+                    );
+                }
                 return;
             }
             let lyrics_y = separator_y.saturating_add(ART_LYRICS_GAP);

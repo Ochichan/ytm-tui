@@ -361,6 +361,7 @@ fn json_round_trips() {
         },
         update_check_enabled: false,
         sleep_timer: crate::config::SleepTimerConfig::default(),
+        atlas: crate::config::AtlasConfig::default(),
     };
     let s = serde_json::to_string(&c).unwrap();
     let back: Config = serde_json::from_str(&s).unwrap();

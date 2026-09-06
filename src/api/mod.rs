@@ -5,6 +5,7 @@
 mod actor;
 mod domain;
 mod protocol;
+pub mod radio_browser;
 pub mod ytmusic;
 
 #[cfg(test)]
@@ -26,7 +27,6 @@ pub use protocol::{
     ApiCmd, ApiCommandKind, ApiEnqueueError, ApiEvent, ApiHandle, ApiMode, ArtistIntent,
     PlaylistIntent,
 };
-
 #[cfg(test)]
 use std::collections::HashMap;
 #[cfg(test)]

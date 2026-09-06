@@ -131,6 +131,12 @@ pub struct RenderBridges {
     /// Whether any actually placed canvas effect uses the heavy redraw cadence. This keeps the
     /// 20 fps cap and synchronized terminal updates active even when lyrics are in the foreground.
     pub canvas_heavy_active: Cell<bool>,
+    /// The globe rect the Atlas view drew last frame (hit-tests and drag geometry read it).
+    pub atlas_globe: Cell<Option<crate::atlas::raster::CellRect>>,
+    /// The station panel rect beside the globe, when shown (wheel routing).
+    pub atlas_panel: Cell<Option<crate::atlas::raster::CellRect>>,
+    /// Memo of the last globe raster, keyed by everything that changes its bytes.
+    pub atlas_raster: RefCell<Option<crate::ui::views::atlas::RasterCache>>,
 }
 
 impl RenderBridges {
@@ -939,6 +945,8 @@ pub struct RadioMode {
     pub(in crate::app) radio_mode_queue: Option<QueueSnapshot>,
     /// A pending confirmation before entering or leaving dedicated Radio mode.
     pub pending_radio_mode_confirm: Option<RadioModeConfirm>,
+    /// The Atlas globe sub-surface (see [`crate::app::atlas`]).
+    pub atlas: crate::app::atlas::AtlasState,
 }
 
 /// View state for the Library-owned Local Deck shell.

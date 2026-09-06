@@ -15,6 +15,7 @@ use ytmapi_rs::YtMusic;
 use ytmapi_rs::auth::BrowserToken;
 use ytmapi_rs::common::{VideoID, YoutubeID};
 
+use super::radio_browser::parse_radio_station;
 use super::{PlayableRef, Song};
 use crate::search_source::{SearchConfig, SearchSource};
 use crate::streaming::{self, StreamingConfig, StreamingMode};
@@ -1362,40 +1363,6 @@ fn parse_jamendo_track(e: &serde_json::Value) -> Option<Song> {
         artist,
         duration,
         PlayableRef::JamendoTrackId { id, url },
-    ))
-}
-
-fn parse_radio_station(e: &serde_json::Value) -> Option<Song> {
-    let id = json_string(e, &["stationuuid"])?;
-    let raw_url = json_string(e, &["url_resolved"]).or_else(|| json_string(e, &["url"]))?;
-    let url = match super::validate_playable_url(SearchSource::RadioBrowser, &raw_url) {
-        Ok(url) => url,
-        Err(error) => {
-            tracing::debug!(id = %id, %error, "skipping radio station with invalid stream URL");
-            return None;
-        }
-    };
-    let title = json_string(e, &["name"]).unwrap_or_else(|| "Unknown station".to_owned());
-    let codec = json_string(e, &["codec"]).unwrap_or_default();
-    let bitrate = e
-        .get("bitrate")
-        .and_then(serde_json::Value::as_u64)
-        .filter(|b| *b > 0)
-        .map(|b| format!("{b}k"))
-        .unwrap_or_default();
-    let country = json_string(e, &["country"]).unwrap_or_default();
-    let artist = [country.as_str(), codec.as_str(), bitrate.as_str()]
-        .into_iter()
-        .filter(|s| !s.trim().is_empty())
-        .collect::<Vec<_>>()
-        .join(" / ");
-    Some(Song::from_source(
-        SearchSource::RadioBrowser,
-        id,
-        title,
-        artist,
-        String::new(),
-        PlayableRef::RadioStream { url },
     ))
 }
 

@@ -218,6 +218,7 @@ impl RuntimeHandles {
             } => self.handle_ai_reload(app, key, model, assistant_enabled),
             Cmd::Scrobble(scrobble) => self.dispatch_scrobble(app, scrobble),
             Cmd::Transfer(cmd) => self.dispatch_transfer(app, cmd),
+            Cmd::Atlas(cmd) => self.dispatch_atlas(app, cmd),
             // Handled in the main loop (the OSC path writes to the terminal this scope doesn't
             // own); never reaches here. Listed for exhaustiveness.
             Cmd::DesktopNotify { .. } => {}

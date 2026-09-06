@@ -36,6 +36,11 @@ impl App {
         // leftover `Info` color from a previous green toast.
         self.status.kind = StatusKind::Error;
         let mut cmds = self.dispatch(msg);
+        // A tuned station becomes `queue.current()` only once the player admits the batch,
+        // which lands as its own message; centre the globe on it then, not at tune time.
+        if self.radio_mode.atlas.follow_uuid.is_some() {
+            self.atlas_follow_playing_now();
+        }
         cmds.extend(self.start_pending_sync_ui_refresh());
         // A refill is scoped to the exact queue membership/order snapshot it started from.
         // Observe revisions after every owner reduction so an admitted manual replacement cannot
@@ -114,6 +119,7 @@ impl App {
         // change the tier, so the wrapper's second sync would be redundant on this path.
         self.sync_ui_tier();
         self.advance_animation();
+        self.atlas_tick();
         if self.reconcile_lyrics_surface_at(Instant::now()) {
             self.dirty = true;
         }
@@ -1144,6 +1150,9 @@ impl App {
                 // tidy frame on blur, resume instantly on focus). The seekbar keeps advancing via
                 // `PlayerTimePos`, which is independent of this tick.
                 self.focused = f;
+                if !f {
+                    self.atlas_focus_lost();
+                }
                 self.dirty = true;
             }
             Msg::Player(pm) => return self.handle_player(pm),
@@ -1237,6 +1246,7 @@ impl App {
             Msg::UpdateChecked(status) => return self.handle_update_checked(status),
             Msg::Tools(event) => return self.handle_tools(event),
             Msg::Transfer(event) => return self.on_transfer_event(event),
+            Msg::Atlas(msg) => return self.on_atlas_msg(msg),
             Msg::Data(DataMsg::TransferPlaylistPersisted(result)) => {
                 let TransferPlaylistPersistence {
                     commit,

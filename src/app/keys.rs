@@ -647,6 +647,9 @@ impl App {
     /// Whether a focused text field is currently capturing typed characters (so command
     /// keys and the `?` help shortcut must not fire — they'd be typed instead).
     pub(in crate::app) fn in_text_entry(&self) -> bool {
+        if self.atlas_active() && self.radio_mode.atlas.search_editing {
+            return true;
+        }
         if matches!(
             self.personal_state.sync_ui.wizard.as_ref(),
             Some(SyncWizard::Setup { .. } | SyncWizard::Join { .. } | SyncWizard::Recovery(_))

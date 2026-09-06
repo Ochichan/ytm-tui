@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/icons/yututui-mark.svg" width="120" alt="YuTuTui! mark">
+</p>
+
 # YuTuTui!
 
 [English](README.md) · **한국어** · [日本語](README.ja.md)
@@ -190,7 +194,7 @@ audio-output.png · retro.png · transfer.gif · help.png · onboarding.gif · c
 
 ### 라디오 모드 — 지금 나오는 곡까지 압니다
 
-**`Alt+Shift+R`** 은 앱 전체를 인터넷 라디오 튜너로 바꿉니다. **`i`** 를 누르면 Gemini가 생방송에서 지금 나오는 곡의 이름을 알려주고, **`f`** 로 바로 즐겨찾기.
+**`Alt+Shift+R`** 은 앱 전체를 인터넷 라디오 튜너로 바꿉니다. **`i`** 를 누르면 Gemini가 생방송에서 지금 나오는 곡의 이름을 알려주고, **`f`** 로 바로 즐겨찾기. **`a`** 를 누르면 **아틀라스**: 점자 도트로 그린, 돌리고 확대하는 라이브 방송국 지구본 — 드래그·튕기기(애니메이션 켜짐)·휠, 점을 클릭해 듣고 국가를 클릭해 탐색 — 이미지 프로토콜 없이 동작합니다.
 
 ![인터넷 라디오 튜너가 된 라디오 모드](docs/media/radio.png)
 > 🖼️ *GIF 준비 중.*
@@ -579,3 +583,5 @@ ytt data import <FILE> --apply              # 원자적으로 적용
 🙏 **[@ZZNN75](https://github.com/ZZNN75)** 님께 진짜 QA 시간에 대한 큰 감사를 — 여러분이 *만나지 않을* 거친 모서리들은 이분이 먼저 부딪혀서 매끈해진 것들이에요. 🫡
 
 MIT. 포크하고, 배포하고, 뭐든 하세요.
+
+아틀라스 지구본의 해안선은 [Natural Earth](https://www.naturalearthdata.com/)(퍼블릭 도메인) 데이터를 [omarchy-radio-atlas](https://github.com/AksharP5/omarchy-radio-atlas)(MIT)가 정리한 폴리곤으로 사용하며, 지구본 조작 방식도 그 프로젝트를 따랐습니다. 방송국 목록은 커뮤니티가 운영하는 [Radio Browser](https://www.radio-browser.info/)에서 가져옵니다.

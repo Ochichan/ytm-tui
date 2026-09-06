@@ -65,6 +65,7 @@ pub enum RuntimeEvent {
     ArtworkResized(ResizeResponse),
     Download(crate::download::DownloadEvent),
     Lyrics(crate::lyrics::LyricsEvent),
+    Atlas(crate::atlas::fetch::AtlasEvent),
     Player(crate::player::PlayerEvent),
     Persist(crate::persist::PersistEvent),
     Remote(crate::remote::server::RemoteEvent),
@@ -139,6 +140,10 @@ impl RuntimeEvent {
             RuntimeEvent::Lyrics(_) => EventPolicy::DropIfStale {
                 stale_key: Key::LyricsVideo,
             },
+            // Generation-tagged; the reducer drops replies for a closed or reopened globe.
+            RuntimeEvent::Atlas(_) => EventPolicy::MustDeliver {
+                lane: Lane::WorkResult,
+            },
             RuntimeEvent::Player(event) => player_event_policy(event.unscoped()),
             RuntimeEvent::Persist(_) => EventPolicy::MustDeliver {
                 lane: Lane::WorkResult,
@@ -197,6 +202,7 @@ impl RuntimeEvent {
             RuntimeEvent::ArtworkResized(_) => "artwork_resized",
             RuntimeEvent::Download(_) => "download",
             RuntimeEvent::Lyrics(_) => "lyrics",
+            RuntimeEvent::Atlas(_) => "atlas",
             RuntimeEvent::Player(_) => "player",
             RuntimeEvent::Persist(_) => "persist",
             RuntimeEvent::Remote(_) => "remote",
@@ -516,6 +522,7 @@ impl From<RuntimeEvent> for Msg {
                 Msg::UpdateChecked(status)
             }
             RuntimeEvent::Transfer(event) => Msg::Transfer(event),
+            RuntimeEvent::Atlas(event) => Msg::Atlas(crate::app::AtlasMsg::Event(event)),
             RuntimeEvent::OpenSubsonicReloaded { .. } => {
                 unreachable!(
                     "OpenSubsonicReloaded must be installed by the owner loop before Msg conversion"
@@ -613,6 +620,8 @@ pub struct RuntimeHandles {
     scrobble_handle: Option<crate::scrobble::ScrobbleHandle>,
     /// Spawned on the first transfer command — costs nothing until the feature is used.
     transfer_handle: Option<crate::transfer::actor::TransferHandle>,
+    /// Spawned on the first Atlas command — the globe costs nothing until it is opened.
+    atlas_handle: Option<crate::atlas::fetch::AtlasHandle>,
     /// Debounced background store writes (the `Cmd::Persist` family).
     persist: crate::persist::PersistHandle,
     /// Runtime-local blocking jobs and cancellable maintenance work.
@@ -712,6 +721,7 @@ impl RuntimeHandles {
             ai_handle,
             scrobble_handle: Some(scrobble_handle),
             transfer_handle: None,
+            atlas_handle: None,
             persist,
             background_tasks: RuntimeTaskSet::new(),
             local_find_query_epoch: std::sync::Arc::new(AtomicU64::new(0)),

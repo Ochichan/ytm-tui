@@ -22,6 +22,7 @@ use crate::streaming::StreamingConfig;
 use crate::theme::ThemeConfig;
 
 mod animation;
+mod atlas;
 mod audio;
 mod recovery;
 mod sleep_timer;
@@ -29,6 +30,7 @@ mod spotify;
 mod storage;
 mod visual;
 pub use animation::{AnimationsConfig, FPS_DEFAULT, FPS_MAX, FPS_MIN};
+pub use atlas::{AtlasConfig, AtlasPanel, AtlasRenderer};
 pub use audio::{
     AudioBackend, AudioConfig, AudioRuntimeConfig, LongFormSeekOptimization,
     MPV_CACHE_BACK_DEFAULT, MPV_CACHE_BACK_LEGACY_DEFAULT, MPV_CACHE_DEFAULTS_REVISION,
@@ -446,6 +448,9 @@ pub struct Config {
 
     /// Sleep-timer defaults: the popup preset and the fade-out length. See [`SleepTimerConfig`].
     pub sleep_timer: SleepTimerConfig,
+
+    /// Atlas globe (dedicated Radio mode). See [`AtlasConfig`].
+    pub atlas: AtlasConfig,
 }
 
 /// Local Deck library roots. Kept separate from `download_dir`: the download folder remains the
@@ -617,6 +622,7 @@ impl Default for Config {
             recording: RecordingConfig::default(),
             update_check_enabled: true,
             sleep_timer: SleepTimerConfig::default(),
+            atlas: AtlasConfig::default(),
         }
     }
 }

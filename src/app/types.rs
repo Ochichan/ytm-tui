@@ -277,6 +277,7 @@ pub enum Msg {
     },
     /// An event from the transfer actor: Spotify auth, playlist listings, job progress.
     Transfer(crate::transfer::actor::TransferEvent),
+    Atlas(crate::app::atlas::AtlasMsg),
 }
 
 /// Results from local-data workers that are applied on the owner lane.
@@ -380,7 +381,9 @@ pub enum Cmd {
     /// Toggle the external video overlay's mute state.
     VideoToggleMute,
     /// Mark a newer release tag as accepted by the reducer and queued for notification.
-    UpdateSeen { tag: String },
+    UpdateSeen {
+        tag: String,
+    },
     /// Search queries and remote search-row fetches.
     Search(SearchCmd),
     /// Test, commit, refresh, or remove the one configured music-server profile.
@@ -400,12 +403,21 @@ pub enum Cmd {
     /// Fetch synced lyrics for a track.
     FetchLyrics(crate::lyrics::LyricsRequest),
     /// Fetch + decode album art for a track (only when album art is enabled).
-    FetchArtwork { video_id: String, source: ArtSource },
+    FetchArtwork {
+        video_id: String,
+        source: ArtSource,
+    },
     /// Prefetch a track's direct stream URL for instant skip.
-    Resolve { video_id: String, watch_url: String },
+    Resolve {
+        video_id: String,
+        watch_url: String,
+    },
     /// Resolve the current self-healing track after yt-dlp was updated. Unlike ordinary
     /// prefetch, an identical request already in flight must not satisfy this command.
-    ResolveForSelfHeal { video_id: String, watch_url: String },
+    ResolveForSelfHeal {
+        video_id: String,
+        watch_url: String,
+    },
     /// Playback self-heal: run a yt-dlp update check now (extraction-shaped failure on
     /// `video_id`). Answered by [`Msg::YtdlpHealResult`]; carries the tools config so
     /// the runtime needs no config plumbing of its own.
@@ -416,10 +428,15 @@ pub enum Cmd {
     /// Fire a desktop notification (radio-recording saved). Handled in the main loop where the
     /// terminal is owned: emits an OSC 9/777 escape when the terminal supports it, else a native
     /// `notify-rust` toast off-thread. Best-effort; the in-app status toast is the final fallback.
-    DesktopNotify { title: String, body: String },
+    DesktopNotify {
+        title: String,
+        body: String,
+    },
     /// Off-path: ask the assistant to distill a recent-feedback digest into artists to avoid /
     /// re-allow for the active station. The result returns as [`AiMsg::StationPatch`].
-    SummarizeFeedback { digest: String },
+    SummarizeFeedback {
+        digest: String,
+    },
     /// Ask Gemini to upgrade local CJK title/artist romanization for a visible batch.
     RomanizeTitles {
         request_id: u64,
@@ -477,6 +494,7 @@ pub enum Cmd {
     Scrobble(ScrobbleCmd),
     /// A command for the transfer actor (Spotify auth / playlist listing / jobs).
     Transfer(crate::transfer::actor::TransferCmd),
+    Atlas(crate::atlas::fetch::AtlasCmd),
 }
 
 /// Scrobble-owner controls share one top-level effect bucket so authentication and live
@@ -647,6 +665,7 @@ pub struct LocalFindPointerStamp {
 pub enum MouseTarget {
     /// An action row in the open TUI context menu.
     ContextMenuItem(usize),
+    Atlas(crate::app::atlas::AtlasTarget),
     ToolSetupCopy,
     ToolSetupGuide,
     ToolSetupRetry,
