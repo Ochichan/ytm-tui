@@ -78,12 +78,21 @@ pub fn render(frame: &mut Frame, app: &App, area: Rect) {
     // DJ Gem mascot sits in the upper-center-right while the start screen shows.
     // Drawn last so it overlays cleanly; it hides once a conversation begins.
     if app.ai.messages.is_empty() {
-        render_mascot(frame, app, inner);
+        render_mascot(frame, app, inner, rows[1]);
     }
 }
 
-fn render_mascot(frame: &mut Frame, app: &App, inner: Rect) {
-    crate::ui::mascot::render_dj_gem(frame, app, inner);
+/// The mascot may grow from one row below the top border down to the transcript's bottom
+/// edge, so its largest size still clears the suggestions, input box and docked player.
+fn render_mascot(frame: &mut Frame, app: &App, inner: Rect, transcript: Rect) {
+    let top = inner.y + 1;
+    let bounds = Rect {
+        x: inner.x,
+        y: top,
+        width: inner.width,
+        height: transcript.bottom().saturating_sub(top),
+    };
+    crate::ui::mascot::render_dj_gem(frame, app, bounds);
 }
 
 fn render_footer(frame: &mut Frame, app: &App, area: Rect) {

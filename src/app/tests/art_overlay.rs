@@ -575,26 +575,47 @@ fn player_popup_marker_keeps_full_kitty_art_rows_at_the_edges() {
     }
 }
 
+fn distinct_working_pose(asset: &crate::ui::mascot::asset::MascotAsset) -> &'static str {
+    let rest = asset.frames[0].lines;
+    asset.frames[1]
+        .lines
+        .iter()
+        .map(|line| line.trim())
+        .find(|line| line.chars().count() > 8 && !rest.iter().any(|r| r.contains(line)))
+        .expect("frame 1 should differ from the rest pose")
+}
+
 #[test]
-fn ai_empty_state_while_playing_renders_groove_frame() {
+fn ai_empty_state_while_playing_renders_working_frame() {
     let mut app = app_playing(1, 0);
     app.mode = Mode::Ai;
     app.config.animations.master = true;
-    // Pin the tick rate: frame_index_for_tick(10, fps=30) must land on the cat
+    // Pin the tick rate: frame_index_for_tick(10, fps=30) must land on the working
     // asset's frame 1 regardless of future FPS_DEFAULT changes.
     app.config.animations.fps = 30;
     app.anim.anim_frame = 10;
 
     assert!(app.ai_mascot_active());
 
+    // 100x30: the docked player and input box leave 18 rows under the top band, so the
+    // ladder settles on the smallest (24x15) Momoring.
     let buf = render_app_buffer(&app, 100, 30);
+    let small = &crate::ui::mascot::generated::momoring::MOMORING_WORKING_24X15;
     assert!(
-        buffer_contains(&buf, "⠩⠳⢯⣀⣴⠟"),
-        "playing AI empty state should render a non-idle groove pose"
+        buffer_contains(&buf, distinct_working_pose(small)),
+        "100x30 AI empty state should render the 24x15 Momoring working pose"
     );
     assert!(
-        buffer_contains(&buf, "⢻⣶⠤⣄"),
-        "groove pose should be the cat_laptop mascot"
+        buffer_contains(&buf, "in plain language."),
+        "the mascot must not overwrite the onboarding headline"
+    );
+
+    // 160x50 frees 38 rows and 100 columns: 49x30 fits, 65x40 does not.
+    let buf = render_app_buffer(&app, 160, 50);
+    let large = &crate::ui::mascot::generated::momoring::MOMORING_WORKING_49X30;
+    assert!(
+        buffer_contains(&buf, distinct_working_pose(large)),
+        "160x50 AI empty state should step up to the 49x30 Momoring"
     );
 }
 

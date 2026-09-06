@@ -1,8 +1,7 @@
 use ratatui::Frame;
-use ratatui::layout::{Alignment, Rect};
+use ratatui::layout::Rect;
 use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
-use ratatui::widgets::Paragraph;
 
 use crate::app::App;
 use crate::theme::ThemeRole as R;
@@ -31,23 +30,27 @@ pub fn render(
         width: asset.width,
         height: asset.height,
     };
+    // Rows are written straight into the buffer (no widget clipping), so refuse any rect
+    // that hangs off the frame instead of indexing outside it.
+    if rect.intersection(frame.area()) != rect {
+        return None;
+    }
     let frame_data = &asset.frames[current_frame_index(app, asset)];
     let base = resolve_style(app, frame_data.style);
-    let lines = frame_data
-        .lines
-        .iter()
-        .enumerate()
-        .map(|(y, line)| {
-            if asset.regions.is_empty() {
-                Line::from(*line).style(base).alignment(Alignment::Center)
-            } else {
-                Line::from(region_spans(app, asset, y as u16, line, base))
-                    .alignment(Alignment::Center)
-            }
-        })
-        .collect::<Vec<_>>();
-
-    frame.render_widget(Paragraph::new(lines), rect);
+    // Paint only each row's inked span: the margin cells stay untouched so a mascot placed
+    // beside text never erases it. Interior blanks still paint, clearing whatever sits
+    // under the art's body. Only ASCII spaces count as margin so byte and cell offsets agree.
+    let buf = frame.buffer_mut();
+    for (y, line) in frame_data.lines.iter().enumerate() {
+        let trimmed = line.trim_end_matches(' ');
+        let inked = trimmed.trim_start_matches(' ');
+        if inked.is_empty() {
+            continue;
+        }
+        let lead = (trimmed.len() - inked.len()) as u16;
+        let row = Line::from(region_spans(app, asset, y as u16, inked, lead, base));
+        buf.set_line(rect.x + lead, rect.y + y as u16, &row, asset.width - lead);
+    }
     Some(rect)
 }
 
@@ -62,20 +65,25 @@ fn resolve_style(app: &App, style: MascotStyle) -> Style {
 }
 
 /// Split one art line into spans at region boundaries so each part of the mascot renders
-/// in its own color. Column == char index is guaranteed by the single-width-glyph asset
-/// test, so plain char iteration is safe here.
+/// in its own color. `line` starts at asset column `x0` (leading blanks already stripped).
+/// Column == char index is guaranteed by the single-width-glyph asset test, so plain char
+/// iteration is safe here.
 fn region_spans(
     app: &App,
     asset: &'static MascotAsset,
     y: u16,
     line: &'static str,
+    x0: u16,
     base: Style,
 ) -> Vec<Span<'static>> {
+    if asset.regions.is_empty() {
+        return vec![Span::styled(line, base)];
+    }
     let style_at = |x: u16| -> Style {
         asset
             .regions
             .iter()
-            .find(|region| region.contains(x, y))
+            .find(|region| region.contains(x0 + x, y))
             .map_or(base, |region| {
                 let style = resolve_style(app, region.style);
                 if region.bold {
@@ -236,6 +244,72 @@ mod tests {
         let cat = buffer[(18u16, 6u16)].style();
         let laptop = buffer[(13u16, 11u16)].style();
         assert_ne!(cat, laptop, "region colors should differ");
+        app.dirty = false;
+    }
+
+    static MARGIN_FRAMES: [MascotFrame; 1] = [MascotFrame {
+        hold: 1,
+        lines: &["    ", " ab ", "    "],
+        style: MascotStyle::Accent,
+    }];
+
+    static MARGIN: MascotAsset = MascotAsset {
+        name: "test_margin",
+        width: 4,
+        height: 3,
+        fps: 3,
+        looped: true,
+        frames: &MARGIN_FRAMES,
+        fallback: None,
+        regions: &[],
+    };
+
+    #[test]
+    fn blank_margins_leave_underlying_cells_alone() {
+        let mut app = App::new(100);
+        let backend = TestBackend::new(4, 3);
+        let mut terminal = Terminal::new(backend).unwrap();
+        let area = Rect {
+            x: 0,
+            y: 0,
+            width: 4,
+            height: 3,
+        };
+        terminal
+            .draw(|frame| {
+                let buf = frame.buffer_mut();
+                for y in 0..3 {
+                    for x in 0..4 {
+                        buf[(x, y)].set_symbol("z");
+                    }
+                }
+                assert!(render(frame, &app, area, &MARGIN).is_some());
+            })
+            .unwrap();
+        let buffer = terminal.backend().buffer();
+        let row = |y: u16| -> String { (0..4).map(|x| buffer[(x, y)].symbol()).collect() };
+        assert_eq!(row(0), "zzzz", "all-blank rows must not paint");
+        assert_eq!(row(1), "zabz", "only the inked span paints");
+        assert_eq!(row(2), "zzzz");
+        app.dirty = false;
+    }
+
+    #[test]
+    fn rect_outside_the_frame_is_refused() {
+        let mut app = App::new(100);
+        let backend = TestBackend::new(4, 3);
+        let mut terminal = Terminal::new(backend).unwrap();
+        terminal
+            .draw(|frame| {
+                let area = Rect {
+                    x: 0,
+                    y: 2,
+                    width: 4,
+                    height: 3,
+                };
+                assert_eq!(render(frame, &app, area, &MARGIN), None);
+            })
+            .unwrap();
         app.dirty = false;
     }
 

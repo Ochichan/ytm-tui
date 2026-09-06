@@ -7,24 +7,39 @@ use ratatui::layout::Rect;
 
 use crate::app::App;
 
-pub fn render_dj_gem(frame: &mut Frame, app: &App, inner: Rect) {
-    const TEXT_W: u16 = 54;
+/// Draw the DJ Gem start-screen mascot inside `bounds` (the strip from the reserved top band
+/// down to the transcript's bottom edge, full view width). The left `TEXT_W` columns stay
+/// clear for the onboarding text; the largest Momoring size that fits the rest is used, so
+/// the mascot never spills over the input box or the docked player.
+pub fn render_dj_gem(frame: &mut Frame, app: &App, bounds: Rect) {
+    // Widest onboarding headline (JA/EN, 55 cells) plus the transcript's 2-cell left pad.
+    const TEXT_W: u16 = 57;
 
+    let max_w = bounds.width.saturating_sub(TEXT_W);
+    let max_h = bounds.height;
     let asset = if app.ai.thinking {
         &generated::dj_gem::DJ_GEM_THINKING
-    } else if app.ai_mascot_active() {
-        &generated::cat_laptop::CAT_LAPTOP_GROOVE
     } else {
-        &generated::cat_laptop::CAT_LAPTOP_IDLE
+        let Some((idle, working)) = generated::momoring::LADDER
+            .iter()
+            .find(|(idle, _)| idle.width <= max_w && idle.height <= max_h)
+        else {
+            return;
+        };
+        if app.ai_mascot_active() {
+            *working
+        } else {
+            *idle
+        }
     };
-    if inner.width < TEXT_W + asset.width || inner.height < asset.height + 3 {
+    if asset.width > max_w || asset.height > max_h {
         return;
     }
 
-    let free_w = inner.width - asset.width;
+    let free_w = bounds.width - asset.width;
     let area = Rect {
-        x: inner.x + (free_w * 3 / 4).max(TEXT_W),
-        y: inner.y + 1,
+        x: bounds.x + (free_w * 3 / 4).max(TEXT_W),
+        y: bounds.y,
         width: asset.width,
         height: asset.height,
     };
@@ -109,6 +124,9 @@ mod tests {
         }
     }
 
+    // Momoring's working strip is deliberately outside this budget: edge-braille of a
+    // moving pixel sprite flips ~50% of cells per frame at every size, which is the motion
+    // itself, not flicker. It is covered by `momoring_ladder_is_uniform` instead.
     const GROOVE_ASSETS: [&crate::ui::mascot::asset::MascotAsset; 2] = [
         &generated::dj_gem::DJ_GEM_GROOVE,
         &generated::cat_laptop::CAT_LAPTOP_GROOVE,
@@ -220,6 +238,37 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn momoring_ladder_is_uniform() {
+        // `animation_draw_fps` reads the largest entry's fps for the whole ladder, and the
+        // idle asset must be the working asset's rest pose so the pair swaps without a jump.
+        let ladder = &generated::momoring::LADDER;
+        let fps = ladder[0].1.fps;
+        for (idle, working) in ladder.iter() {
+            assert_eq!(working.fps, fps, "{}", working.name);
+            assert_eq!(idle.fps, fps, "{}", idle.name);
+            assert_eq!(idle.frames.len(), 1, "{}", idle.name);
+            assert_eq!(
+                (idle.width, idle.height),
+                (working.width, working.height),
+                "{}",
+                idle.name
+            );
+            assert!(
+                std::ptr::eq(idle.frames[0].lines, working.frames[0].lines),
+                "{} should be {}'s rest pose",
+                idle.name,
+                working.name
+            );
+        }
+        assert!(
+            ladder
+                .windows(2)
+                .all(|pair| pair[0].0.height > pair[1].0.height),
+            "ladder must be sorted largest first"
+        );
     }
 
     #[test]
