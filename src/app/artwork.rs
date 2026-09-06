@@ -353,8 +353,10 @@ impl App {
             return fps.min(12);
         }
         if self.ai_mascot_active() {
+            // Every Momoring size shares one cadence, so the largest entry speaks for all.
             return fps.min(
-                crate::ui::mascot::generated::cat_laptop::CAT_LAPTOP_GROOVE
+                crate::ui::mascot::generated::momoring::LADDER[0]
+                    .1
                     .fps
                     .max(1),
             );

@@ -666,7 +666,7 @@ fn ai_mascot_animation_redraws_only_when_pose_can_change() {
     app.playback.paused = false;
     app.config.animations.master = true;
     app.config.animations.fps = 30;
-    let asset = &crate::ui::mascot::generated::cat_laptop::CAT_LAPTOP_GROOVE;
+    let asset = crate::ui::mascot::generated::momoring::LADDER[0].1;
 
     assert!(app.animation_active());
     assert_eq!(app.animation_tick_fps(), 30);
