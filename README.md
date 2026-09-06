@@ -15,12 +15,13 @@ YouTube Music in your terminal — fast, keyboard-driven, no browser tab eating 
 
 Stable enough for daily use, still moving fast.
 
+![The player with centered cover art and docked playback controls](docs/media/hero.gif)
+
+[View a static player screenshot](docs/media/player.png)
+
 ### [▶ Live demo & the full feature tour → ochichan.github.io/Yututui](https://ochichan.github.io/Yututui/)
 
 **📖 New to terminals?** The [friendly manual](MANUAL.md) walks through every mode — music, radio, the Local Deck, and the full Spotify move-in — step by step, no jargon. ([한국어](MANUAL.ko.md) · [日本語](MANUAL.ja.md))
-
-![YuTuTui! in action — search, album art, and the docked player](docs/media/hero.gif)
-
 
 ---
 
@@ -137,80 +138,46 @@ That's it. Music.
 
 **New to terminals?** Switch on **Beginner Mode** (Settings → General) and the next launch adds an interactive, nine-step walkthrough — it starts by letting you pick the UI language (English / 한국어 / 日本語) — plus the [friendly manual](MANUAL.md) covers every mode at your own pace.
 
+<details>
+<summary>Preview the Beginner Mode walkthrough</summary>
+
+![Choosing the UI language in the first step of Beginner Mode](docs/media/onboarding.png)
+
+</details>
+
 ## Tour
 
 Every feature below is shown live, in detail, on the **[feature tour](https://ochichan.github.io/Yututui/)**.
-
-<!-- 📸 Media inventory: hero.gif, player.png, search.png, sources.png, radio.png,
-library.png, queue.png, downloads.png, localdeck.png, themes.png, settings.png,
-audio-output.png, retro.png, help.png, onboarding.png, animations.gif,
-showpiece.gif, eq.png, context-menu.png are live. Still needed: lyrics.gif,
-djgem.gif, assistant.gif, video.gif, radio-id.gif, everywhere.png, tray.png,
-transfer.gif
-(drop files into docs/media/; the same files serve all three READMEs). -->
 
 ### The player — real album art & time-synced lyrics
 
 Actual cover images drawn right in the terminal (Kitty/Sixel/iTerm2, auto-detected — pick Standard, High or Original quality in Settings); **`Shift+L`** scrolls the lyrics underneath. Click any visible lyric line to seek there, or use **`z`** / **`Shift+Z`** to show the lyrics 0.1 seconds earlier / later. When lyrics load, **`[ − 0.0s + ]`** appears for three seconds; after it folds to **`[±]`**, click the handle to reopen it for three seconds and use **`−/+`** for fine adjustment. The player controls dock to the bottom of every screen (collapse them with **`Shift+B`**; the classic top layout is one setting away), the art stays centered in whatever space is left, and shrinking the window below ~32×14 turns the whole app into a tiny miniplayer that springs back when the window grows.
 
-![The player with album art and synced lyrics](docs/media/player.png)
-![Choosing the audio output device in Settings](docs/media/audio-output.png)
-> 🖼️ *GIF coming soon.*
-<!-- 📸 TO FILL: add docs/media/lyrics.gif, then uncomment:
-![Time-synced lyrics scrolling under the player](docs/media/lyrics.gif)
--->
-
 ### Seven catalogs, one search box
 
 **`Tab`** in Search flips between YouTube Music, SoundCloud, Audius, Jamendo, Internet Archive, Radio Browser and your OpenSubsonic music server — or all at once, every result tagged `[SRC]`.
 
-![Searching across seven catalogs from one box](docs/media/sources.png)
-![Search results with album art in the terminal](docs/media/search.png)
+![Search results with the catalog picker open](docs/media/sources.png)
 
 ### DJ Gem streaming
 
 **`Ctrl+R`** builds an endless station around what you're hearing. Recommended tracks carry a clickable **`?`** in the queue and beside Now Playing. Press **`w`** with the queue open to explain its selected row; anywhere else, it explains the current track. The card always names the recommendation source and, when DJ Gem supplied them, adds its role, plain-language reasons and confidence. Picks made without model detail show the source alone.
 
-> 🖼️ *GIF coming soon.*
-<!-- 📸 TO FILL: add docs/media/djgem.gif, delete the "coming soon" line above, then uncomment:
-![DJ Gem streaming with the "why this song" panel](docs/media/djgem.gif)
--->
-
 ### DJ Gem assistant *(optional)*
 
 **`g`**, then ask in plain words: *"play some lo-fi", "make me a rainy-day playlist"*. Needs a free Gemini key; everything else works without it.
-
-> 🖼️ *GIF coming soon.*
-<!-- 📸 TO FILL: add docs/media/assistant.gif, delete the "coming soon" line above, then uncomment:
-![Asking the DJ Gem assistant for music in plain words](docs/media/assistant.gif)
--->
 
 ### The music video, floating over your terminal
 
 **`v`** opens it in a small mpv window; *Auto-continue videos* hands each video off to the next track's, and the mpv window answers `Space`, `.`, `,`, `q`, `f`, `m`.
 
-> 🖼️ *GIF coming soon.*
-<!-- 📸 TO FILL: add docs/media/video.gif, delete the "coming soon" line above, then uncomment:
-![The music video floating over the terminal](docs/media/video.gif)
--->
-
 ### Radio mode — and it knows the song
 
 **`Alt+Shift+R`** turns the whole app into an internet-radio tuner; press **`i`** and Gemini names what's playing on the live stream, **`f`** favorites it. Press **`a`** for **Atlas**: a rotatable, zoomable globe of live stations drawn in Braille dots — drag, flick (with animations on), wheel, click a signal to tune, click a country to browse — with no image protocol required.
 
-![Radio mode as an internet-radio tuner](docs/media/radio.png)
-> 🖼️ *GIF coming soon.*
-<!-- 📸 TO FILL: add docs/media/radio-id.gif, then uncomment:
-![Pressing i to identify the song playing on live radio](docs/media/radio-id.gif)
--->
-
 ### Library, queue & downloads
 
 Build playlists in the Library (or let DJ Gem build them), pop the queue with **`c`**, and **`d`** saves a tagged m4a with cover art — **`Shift+D`** grabs the whole list.
-
-![The Library with playlists, favorites and history](docs/media/library.png)
-![The queue popup over the player](docs/media/queue.png)
-![Downloads: tagged m4a files with cover art, played offline](docs/media/downloads.png)
 
 ### Local Deck — an offline player for everything on disk
 
@@ -218,52 +185,41 @@ Build playlists in the Library (or let DJ Gem build them), pop the queue with **
 
 Local playback and Find use only files already on your computer. Other opt-in integrations may still use the network, and the manual online-candidate search in **Import Sessions** explicitly asks before leaving the Local Deck. The Local Deck also remembers its own theme separately from normal and Radio modes: a fresh or older installation starts it with **Local Launch**, then restores whichever Local theme you save there. The [manual](MANUAL.md) has the full tour.
 
-![The Local Deck browsing local albums](docs/media/localdeck.png)
-
 ### Control from anywhere
 
 Media keys, macOS Control Center, Windows SMTC + tray mini player, Linux MPRIS, `ytt -r` from any shell — or a fully headless daemon.
-
-> 🖼️ *Screenshots coming soon.*
-<!-- 📸 TO FILL: add docs/media/everywhere.png, delete the "coming soon" line above, then uncomment:
-![OS integrations: tray mini player, Control Center, SMTC, MPRIS](docs/media/everywhere.png)
--->
-<!-- 📸 TO FILL: add docs/media/tray.png, then uncomment:
-![The yututray mini player in the menu bar / tray](docs/media/tray.png)
--->
 
 ### Make it yours
 
 14 themes with all 34 color roles hex-editable, 40 animations — from shooting stars and a spinning ASCII donut up to full-canvas showpieces (fireworks, Game of Life, pipes, plasma) — a 10-band EQ with presets, your pick of audio-output device, plus loudness normalization. The UI itself speaks English, 한국어 and 日本語 — Settings → General → **Language** cycles through all three.
 
-![The theme and color settings screen](docs/media/themes.png)
-![The Settings screen](docs/media/settings.png)
-![Animations, including the spinning ASCII donut](docs/media/animations.gif)
-![A full-canvas showpiece animation — fireworks, Game of Life, pipes or plasma](docs/media/showpiece.gif)
-![The 10-band EQ with presets](docs/media/eq.png)
+![Aquarium animation around the player, with a Beginner Mode tip open](docs/media/animations.gif)
+
+<details>
+<summary>View playback, audio output and EQ settings</summary>
+
+<a href="docs/media/audio-output.png"><img src="docs/media/audio-output.png" width="620" alt="Playback settings showing the audio output, EQ preset and frequency sliders"></a>
+
+</details>
 
 ### Retro mode
 
 One toggle makes everything CP437-safe for a bare Linux console or a crusty SSH session — album art included, as honest ASCII art. Retro also pins the UI language to English — CP437 has no CJK glyphs.
 
-![Retro mode with ASCII album art](docs/media/retro.png)
-
 ### Spotify moves in with one command
 
 `ytt transfer import <url>` — checkpointed, resumable, with a match report for anything ambiguous. Setup in the [reference](#reference) below, or let the [manual](MANUAL.md) hold your hand through the whole thing.
-
-> 🖼️ *GIF coming soon.*
-<!-- 📸 TO FILL: add docs/media/transfer.gif, delete the "coming soon" line above, then uncomment:
-![A Spotify playlist importing in one command](docs/media/transfer.gif)
--->
 
 ### The app remembers the keys
 
 **`?`** opens a live cheat sheet that reflects *your* bindings — app actions are rebindable, the whole UI is mouse-aware, and safety/modal keys stay fixed and dependable.
 
-![The live keybinding cheat sheet](docs/media/help.png)
-![Beginner Mode's interactive walkthrough](docs/media/onboarding.png)
-![Right-click context menu on a track row](docs/media/context-menu.png)
+<details>
+<summary>View the track context menu</summary>
+
+<a href="docs/media/context-menu.png"><img src="docs/media/context-menu.png" width="620" alt="A search result context menu with play, queue, favorite, playlist and download actions"></a>
+
+</details>
 
 ## Essential keys
 

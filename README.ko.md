@@ -15,14 +15,13 @@
 
 매일 쓰기엔 충분히 안정적이지만, 아직 빠르게 움직이는 중입니다.
 
+![가운데 앨범 아트와 하단 재생 컨트롤이 있는 플레이어](docs/media/hero.gif)
+
+[플레이어 정지 화면 보기](docs/media/player.png)
+
 ### [▶ 라이브 데모 · 기능 전체 둘러보기 → ochichan.github.io/Yututui](https://ochichan.github.io/Yututui/)
 
 **📖 터미널이 낯설다면?** [친절한 사용 설명서](MANUAL.ko.md)가 모든 모드를 — 음악, 라디오, 로컬 덱, Spotify 이사까지 — 전문 용어 없이 한 걸음씩 안내합니다.
-
-> 🖼️ *데모 움짤 준비 중!*
-<!-- 📸 채우는 법: docs/media/hero.gif 를 추가하고, 위의 "준비 중" 줄을 지운 뒤 아래 줄 주석을 해제하세요:
-![검색, 재생, 진짜 앨범 아트와 싱크 가사가 터미널 하나에](docs/media/hero.gif)
--->
 
 ---
 
@@ -135,80 +134,46 @@ ytt
 
 **터미널이 낯설다면?** 설정 → 일반에서 **비기너 모드**를 켜면 다음 실행에 대화형 9단계 안내가 더해집니다 — 첫 단계에서 UI 언어(English / 한국어 / 日本語)부터 고를 수 있어요 — [친절한 사용 설명서](MANUAL.ko.md)로도 모든 모드를 내 속도로 익힐 수 있어요.
 
+<details>
+<summary>비기너 모드 안내 미리 보기</summary>
+
+![비기너 모드 첫 단계에서 UI 언어를 고르는 모습](docs/media/onboarding.png)
+
+</details>
+
 ## 둘러보기
 
 아래 모든 기능은 **[기능 둘러보기 페이지](https://ochichan.github.io/Yututui/)** 에서 라이브로, 자세히 볼 수 있어요.
-
-<!-- 📸 미디어 넣으실 분께: docs/media/ 폴더에 아래 이름 그대로 파일을 넣어주세요:
-hero.gif · player.png · lyrics.gif · search.gif · sources.png · djgem.gif · assistant.gif ·
-video.gif · radio.png · radio-id.gif · library.png · queue.png · downloads.png ·
-localdeck.png · everywhere.png · tray.png · themes.gif · animations.gif · showpiece.gif · eq.png ·
-audio-output.png · retro.png · transfer.gif · help.png · onboarding.gif · context-menu.png
-같은 파일이 README.md / README.ko.md / README.ja.md 세 곳에 함께 쓰입니다. 아래 각 슬롯마다
-한 줄 안내가 있고, 더 넣고 싶으면 슬롯 블록을 복사해서 추가하면 됩니다. -->
 
 ### 플레이어 — 진짜 앨범 아트 & 싱크 가사
 
 실제 커버 이미지가 터미널에 그대로 그려집니다(Kitty/Sixel/iTerm2 자동 감지, 화질은 설정에서 Standard/High/Original 중 선택). **`Shift+L`** 로 그 아래에 시간 싱크 가사가 흐릅니다. 보이는 가사 행을 클릭하면 해당 시점으로 탐색하고, **`z`** / **`Shift+Z`** 로 가사를 0.1초씩 앞당기거나 늦출 수 있습니다. 가사가 로드되면 **`[ − 0.0s + ]`** 가 3초 동안 보이며, **`[±]`** 로 접힌 뒤에는 핸들을 눌러 다시 3초간 펼치고 **`−/+`** 로 미세 조정합니다. 플레이어 컨트롤은 모든 화면 하단에 도킹되고(**`Shift+B`** 로 접기, 클래식 상단 배치는 설정 하나로 복귀), 앨범 아트는 남은 공간 가운데에 자리잡으며, 창을 약 32×14 미만으로 줄이면 앱 전체가 작은 미니플레이어로 변했다가 창이 커지면 원래대로 돌아옵니다.
 
-![앨범 아트와 싱크 가사가 있는 플레이어](docs/media/player.png)
-![설정에서 오디오 출력 장치를 고르는 모습](docs/media/audio-output.png)
-> 🖼️ *GIF 준비 중.*
-<!-- 📸 add docs/media/lyrics.gif:
-![플레이어 아래로 흐르는 시간 싱크 가사](docs/media/lyrics.gif)
--->
-
 ### 카탈로그 일곱, 검색창 하나
 
 검색에서 **`Tab`** 을 누르면 YouTube Music, SoundCloud, Audius, Jamendo, Internet Archive, Radio Browser, OpenSubsonic 음악 서버를 오갑니다 — 전부 한꺼번에도 가능하고, 결과마다 `[SRC]` 태그가 붙어요.
 
-![터미널에서 앨범 아트와 함께 보는 검색 결과](docs/media/search.png)
-![검색창 하나로 일곱 카탈로그를 검색](docs/media/sources.png)
+![카탈로그 선택 메뉴를 펼친 검색 결과](docs/media/sources.png)
 
 ### DJ Gem 스트리밍
 
 **`Ctrl+R`**은 지금 듣는 곡을 중심으로 끝없는 스테이션을 만듭니다. 추천 곡에는 큐와 Now Playing 옆에 클릭 가능한 **`?`**가 붙습니다. 큐를 연 상태에서 **`w`**를 누르면 선택한 행을 설명하고, 그 외에는 현재 곡을 설명합니다. 카드에는 추천 출처가 항상 표시되고, DJ Gem이 제공한 경우 역할·쉬운 말 이유·신뢰도가 함께 나옵니다. 모델 상세 정보 없이 고른 곡은 출처만 표시됩니다.
 
-> 🖼️ *움짤 준비 중!*
-<!-- 📸 채우는 법: docs/media/djgem.gif 를 추가하고, 위의 "준비 중" 줄을 지운 뒤 아래 줄 주석을 해제하세요:
-!["이 곡을 고른 이유" 패널과 함께하는 DJ Gem 스트리밍](docs/media/djgem.gif)
--->
-
 ### DJ Gem 어시스턴트 *(선택)*
 
 **`g`** 를 누르고 말로 시키세요: *"lo-fi 틀어줘", "비 오는 날 플레이리스트 만들어줘"*. 무료 Gemini 키가 필요하고, 나머지 기능은 키 없이도 전부 동작합니다.
-
-> 🖼️ *움짤 준비 중!*
-<!-- 📸 채우는 법: docs/media/assistant.gif 를 추가하고, 위의 "준비 중" 줄을 지운 뒤 아래 줄 주석을 해제하세요:
-![DJ Gem 어시스턴트에게 말로 음악을 부탁하는 모습](docs/media/assistant.gif)
--->
 
 ### 터미널 위에 떠 있는 뮤직비디오
 
 **`v`** 를 누르면 작은 mpv 창에 뮤직비디오가 뜹니다. *영상 자동 이어재생*을 켜면 다음 곡의 영상으로 알아서 이어지고, mpv 창에서는 `Space`, `.`, `,`, `q`, `f`, `m`이 통합니다.
 
-> 🖼️ *움짤 준비 중!*
-<!-- 📸 채우는 법: docs/media/video.gif 를 추가하고, 위의 "준비 중" 줄을 지운 뒤 아래 줄 주석을 해제하세요:
-![터미널 위에 떠 있는 뮤직비디오](docs/media/video.gif)
--->
-
 ### 라디오 모드 — 지금 나오는 곡까지 압니다
 
 **`Alt+Shift+R`** 은 앱 전체를 인터넷 라디오 튜너로 바꿉니다. **`i`** 를 누르면 Gemini가 생방송에서 지금 나오는 곡의 이름을 알려주고, **`f`** 로 바로 즐겨찾기. **`a`** 를 누르면 **아틀라스**: 점자 도트로 그린, 돌리고 확대하는 라이브 방송국 지구본 — 드래그·튕기기(애니메이션 켜짐)·휠, 점을 클릭해 듣고 국가를 클릭해 탐색 — 이미지 프로토콜 없이 동작합니다.
 
-![인터넷 라디오 튜너가 된 라디오 모드](docs/media/radio.png)
-> 🖼️ *GIF 준비 중.*
-<!-- 📸 add docs/media/radio-id.gif:
-![i 를 눌러 라이브 라디오의 현재 곡을 식별하는 모습](docs/media/radio-id.gif)
--->
-
 ### 라이브러리, 큐 & 다운로드
 
 라이브러리에서 바로 플레이리스트를 만들고(DJ Gem에게 시켜도 됩니다), **`c`** 로 큐를 띄우고, **`d`** 는 커버 아트·태그 박힌 m4a로 저장 — **`Shift+D`** 는 목록 통째로.
-
-![플레이리스트·즐겨찾기·기록이 있는 라이브러리](docs/media/library.png)
-![플레이어 위에 뜬 큐 팝업](docs/media/queue.png)
-![다운로드: 커버 아트와 태그가 박힌 m4a, 오프라인 재생](docs/media/downloads.png)
 
 ### 로컬 덱 — 디스크 위 모든 음악의 오프라인 플레이어
 
@@ -216,52 +181,41 @@ audio-output.png · retro.png · transfer.gif · help.png · onboarding.gif · c
 
 로컬 재생과 찾기는 컴퓨터에 이미 있는 파일만 사용합니다. 별도로 켠 연동 기능은 네트워크를 쓸 수 있고, **가져오기 세션**의 수동 온라인 후보 검색은 로컬 덱을 나가기 전에 명시적으로 확인합니다. 로컬 덱 테마도 일반·라디오 모드와 따로 기억합니다. 새 설치와 기존 설정 모두 처음에는 **Local Launch**로 시작하고, 이후에는 로컬 덱에서 저장한 테마로 돌아옵니다. 자세한 안내는 [사용 설명서](MANUAL.ko.md)에.
 
-![로컬 앨범을 둘러보는 로컬 덱](docs/media/localdeck.png)
-
 ### 어디서든 제어
 
 미디어 키, macOS Control Center, Windows SMTC + 트레이 미니 플레이어, Linux MPRIS, 아무 셸에서나 `ytt -r` — 아예 터미널 없는 headless 데몬까지.
-
-> 🖼️ *스크린샷 준비 중!*
-<!-- 📸 채우는 법: docs/media/everywhere.png 를 추가하고, 위의 "준비 중" 줄을 지운 뒤 아래 줄 주석을 해제하세요:
-![OS 통합: 트레이 미니 플레이어, Control Center, SMTC, MPRIS](docs/media/everywhere.png)
--->
-<!-- 📸 채우는 법: docs/media/tray.png 를 추가하고 주석 해제:
-![메뉴바/트레이의 yututray 미니 플레이어](docs/media/tray.png)
--->
 
 ### 내 마음대로
 
 테마 14종(색 역할 34개 전부 hex 편집), 애니메이션 40종 — 별똥별과 도는 ASCII 도넛부터 풀캔버스 쇼피스(불꽃놀이, 라이프 게임, 파이프, 플라즈마)까지 — 프리셋 있는 10밴드 EQ, 오디오 출력 장치 선택, 라우드니스 노멀라이즈까지. UI 자체도 English / 한국어 / 日本語 세 언어를 말합니다 — 설정 → 일반 → **언어**에서 차례로 전환돼요.
 
-![테마 및 색상 설정 화면](docs/media/themes.png)
-![설정 화면](docs/media/settings.png)
-![도는 ASCII 도넛을 포함한 애니메이션들](docs/media/animations.gif)
-![풀캔버스 쇼피스 애니메이션 — 불꽃놀이, 라이프 게임, 파이프, 플라즈마](docs/media/showpiece.gif)
-![프리셋이 있는 10밴드 EQ](docs/media/eq.png)
+![비기너 모드 안내가 열린 플레이어 주변의 수족관 애니메이션](docs/media/animations.gif)
+
+<details>
+<summary>재생·오디오 출력·EQ 설정 보기</summary>
+
+<a href="docs/media/audio-output.png"><img src="docs/media/audio-output.png" width="620" alt="오디오 출력, EQ 프리셋과 주파수 슬라이더가 보이는 재생 설정"></a>
+
+</details>
 
 ### 레트로 모드
 
 토글 하나로 모든 것이 CP437 안전이 됩니다 — 맨몸 리눅스 콘솔이나 낡은 SSH 세션용, 앨범 아트도 정직한 ASCII 아트로. 레트로 모드에서는 UI 언어도 영어로 고정됩니다 — CP437에는 CJK 글리프가 없거든요.
 
-![ASCII 앨범 아트가 있는 레트로 모드](docs/media/retro.png)
-
 ### Spotify가 명령 한 줄로 이사 옵니다
 
 `ytt transfer import <url>` — 체크포인트, 이어하기, 애매한 곡은 매치 리포트로. 설정 방법은 아래 [참고 자료](#참고-자료)에 — 손잡고 처음부터 끝까지는 [사용 설명서](MANUAL.ko.md)가 안내합니다.
-
-> 🖼️ *움짤 준비 중!*
-<!-- 📸 채우는 법: docs/media/transfer.gif 를 추가하고, 위의 "준비 중" 줄을 지운 뒤 아래 줄 주석을 해제하세요:
-![Spotify 플레이리스트가 명령 한 줄로 이사 오는 모습](docs/media/transfer.gif)
--->
 
 ### 단축키는 앱이 기억합니다
 
 **`?`** 를 누르면 *내가 바꾼* 키 그대로 반영된 라이브 치트시트가 뜹니다 — 앱 동작 키는 재설정할 수 있고, UI 전체가 마우스를 지원하며, 안전·모달 키는 고정되어 있습니다.
 
-![라이브 단축키 치트시트](docs/media/help.png)
-![초보자 모드의 인터랙티브 둘러보기](docs/media/onboarding.png)
-![트랙 행의 우클릭 컨텍스트 메뉴](docs/media/context-menu.png)
+<details>
+<summary>트랙 우클릭 메뉴 보기</summary>
+
+<a href="docs/media/context-menu.png"><img src="docs/media/context-menu.png" width="620" alt="재생, 큐 추가, 즐겨찾기, 플레이리스트 추가, 다운로드가 있는 검색 결과 우클릭 메뉴"></a>
+
+</details>
 
 ## 필수 키
 

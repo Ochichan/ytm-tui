@@ -15,14 +15,13 @@
 
 毎日使えるくらいには安定していますが、まだ速く動いている最中です。
 
+![中央のアルバムアートと下部の再生コントロールを備えたプレイヤー](docs/media/hero.gif)
+
+[プレイヤーの静止画を見る](docs/media/player.png)
+
 ### [▶ ライブデモ・機能ツアー → ochichan.github.io/Yututui](https://ochichan.github.io/Yututui/)
 
 **📖 ターミナルは初めて？** [やさしいマニュアル](MANUAL.ja.md)が、音楽・ラジオ・ローカルデッキ・Spotify のお引っ越しまで、すべてのモードを専門用語なしで一歩ずつ案内します。
-
-> 🖼️ *デモ GIF は近日追加予定。*
-<!-- 📸 埋め方: docs/media/hero.gif を追加し、上の「近日追加」行を消して、次の行のコメントを外してください:
-![検索、再生、本物のアルバムアートと同期歌詞がターミナル一つに](docs/media/hero.gif)
--->
 
 ---
 
@@ -137,80 +136,46 @@ ytt
 
 **ターミナルは初めて？** 設定 → 全般で **ビギナーモード** をオンにすると、次回の起動に対話型の9ステップ案内が加わります — 最初のステップで UI 言語（English / 한국어 / 日本語）を選べます — [やさしいマニュアル](MANUAL.ja.md)でも、すべてのモードを自分のペースで学べます。
 
+<details>
+<summary>ビギナーモードの案内を見る</summary>
+
+![ビギナーモードの最初のステップで UI 言語を選ぶ画面](docs/media/onboarding.png)
+
+</details>
+
 ## ツアー
 
 以下の機能はすべて **[機能ツアー](https://ochichan.github.io/Yututui/)** でライブで、詳しく見られます。
-
-<!-- 📸 メディアを追加する方へ: docs/media/ フォルダに、以下の名前のとおりファイルを置いてください:
-hero.gif · player.png · lyrics.gif · search.gif · sources.png · djgem.gif · assistant.gif ·
-video.gif · radio.png · radio-id.gif · library.png · queue.png · downloads.png ·
-localdeck.png · everywhere.png · tray.png · themes.gif · animations.gif · showpiece.gif · eq.png ·
-audio-output.png · retro.png · transfer.gif · help.png · onboarding.gif · context-menu.png
-同じファイルが README.md / README.ko.md / README.ja.md の3つで共用されます。下の各スロットに
-一行の説明があります。追加のショットも歓迎 — スロットのブロックをコピーしてください。 -->
 
 ### プレイヤー — 本物のアルバムアート & 同期歌詞
 
 実際のカバー画像がターミナルにそのまま描かれます（Kitty/Sixel/iTerm2 自動検出、画質は設定で Standard/High/Original から選択）。**`Shift+L`** でその下を時間同期の歌詞が流れます。表示中の歌詞行をクリックすればその時点へシークでき、**`z`** / **`Shift+Z`** で歌詞を 0.1 秒ずつ早く / 遅くできます。歌詞が読み込まれると **`[ − 0.0s + ]`** が 3 秒間表示され、**`[±]`** に折りたたまれた後はハンドルをクリックして再び 3 秒間開き、**`−/+`** で微調整できます。プレイヤーのコントロールはすべての画面の下部にドッキングされ（**`Shift+B`** で折りたたみ、クラシックな上部レイアウトも設定ひとつで復帰）、アルバムアートは残りの空間の中央に配置されます。ウィンドウを約 32×14 未満まで縮めるとアプリ全体が小さなミニプレイヤーになり、広げれば元に戻ります。
 
-![アルバムアートと同期歌詞のあるプレイヤー](docs/media/player.png)
-![設定でオーディオ出力デバイスを選ぶ様子](docs/media/audio-output.png)
-> 🖼️ *GIF 準備中.*
-<!-- 📸 add docs/media/lyrics.gif:
-![プレイヤーの下を流れる時間同期の歌詞](docs/media/lyrics.gif)
--->
-
 ### カタログは七つ、検索窓は一つ
 
 検索で **`Tab`** を押すと YouTube Music、SoundCloud、Audius、Jamendo、Internet Archive、Radio Browser、そして OpenSubsonic 音楽サーバーを行き来できます — 全部まとめても可、結果には `[SRC]` タグ付き。
 
-![端末でアルバムアートと一緒に見る検索結果](docs/media/search.png)
-![一つの検索窓から七つのカタログを検索](docs/media/sources.png)
+![カタログ選択メニューを開いた検索結果](docs/media/sources.png)
 
 ### DJ Gem ストリーミング
 
 **`Ctrl+R`** は、いま聴いている曲を軸にした果てしないステーションを作ります。おすすめ曲にはキューと Now Playing の横にクリック可能な **`?`** が付きます。キューを開いた状態で **`w`** を押すと選択中の行を、それ以外の場所では現在の曲を説明します。カードにはおすすめの出典が常に表示され、DJ Gem が提供した場合はその役割・平易な理由・確信度も加わります。モデル詳細なしで選ばれた曲は出典のみ表示されます。
 
-> 🖼️ *GIF は近日追加予定。*
-<!-- 📸 埋め方: docs/media/djgem.gif を追加し、上の「近日追加」行を消して、次の行のコメントを外してください:
-![「この曲を選んだ理由」パネル付きの DJ Gem ストリーミング](docs/media/djgem.gif)
--->
-
 ### DJ Gem アシスタント *（任意）*
 
 **`g`** を押して言葉で頼むだけ: *「lo-fi をかけて」「雨の日プレイリストを作って」*。無料の Gemini キーが必要で、それ以外の機能はキーなしで全部動きます。
-
-> 🖼️ *GIF は近日追加予定。*
-<!-- 📸 埋め方: docs/media/assistant.gif を追加し、上の「近日追加」行を消して、次の行のコメントを外してください:
-![DJ Gem アシスタントに言葉で音楽を頼む様子](docs/media/assistant.gif)
--->
 
 ### ターミナルの上に浮かぶミュージックビデオ
 
 **`v`** で小さな mpv ウィンドウに MV が浮かびます。*動画の自動連続再生*をオンにすると次の曲の MV へ自動で続き、mpv ウィンドウでは `Space`, `.`, `,`, `q`, `f`, `m` が効きます。
 
-> 🖼️ *GIF は近日追加予定。*
-<!-- 📸 埋め方: docs/media/video.gif を追加し、上の「近日追加」行を消して、次の行のコメントを外してください:
-![ターミナルの上に浮かぶミュージックビデオ](docs/media/video.gif)
--->
-
 ### ラジオモード — いま流れている曲まで分かる
 
 **`Alt+Shift+R`** はアプリ全体をネットラジオのチューナーに変えます。**`i`** を押せば Gemini が生放送でいま流れている曲名を教えてくれて、**`f`** でそのままお気に入りに。**`a`** で**アトラス**: 点字ドットで描いた、回してズームできるライブ局の地球儀 — ドラッグ・弾き（アニメーション有効時）・ホイール、点をクリックして再生、国をクリックして探索 — 画像プロトコル不要です。
 
-![ネットラジオのチューナーになったラジオモード](docs/media/radio.png)
-> 🖼️ *GIF 準備中.*
-<!-- 📸 add docs/media/radio-id.gif:
-![i を押してライブラジオの現在の曲を識別する様子](docs/media/radio-id.gif)
--->
-
 ### ライブラリ、キュー & ダウンロード
 
 ライブラリでそのままプレイリストを作り（DJ Gem に頼んでも OK）、**`c`** でキューを開き、**`d`** はカバーアートとタグ入りの m4a に保存 — **`Shift+D`** はリスト丸ごと。
-
-![プレイリスト・お気に入り・履歴のあるライブラリ](docs/media/library.png)
-![プレイヤーの上に出たキューのポップアップ](docs/media/queue.png)
-![ダウンロード: カバーアートとタグ入りの m4a、オフライン再生](docs/media/downloads.png)
 
 ### ローカルデッキ — ディスク上のすべての音楽のオフラインプレイヤー
 
@@ -218,52 +183,41 @@ audio-output.png · retro.png · transfer.gif · help.png · onboarding.gif · c
 
 ローカル再生と Find が使うのは、すでにパソコンにあるファイルだけです。別途有効にした連携機能はネットワークを使う場合があり、**インポートセッション**の手動オンライン候補検索は、ローカルデッキを出る前に明示的に確認します。ローカルデッキのテーマも通常・ラジオモードとは別に記憶されます。新規インストールでも以前の設定でも、最初は **Local Launch** で始まり、その後はローカルデッキで保存したテーマに戻ります。詳しいツアーは[マニュアル](MANUAL.ja.md)へ。
 
-![ローカルのアルバムを閲覧するローカルデッキ](docs/media/localdeck.png)
-
 ### どこからでも操作
 
 メディアキー、macOS コントロールセンター、Windows SMTC + トレイのミニプレイヤー、Linux MPRIS、どのシェルからでも `ytt -r` — さらにターミナル不要の headless デーモンも。
-
-> 🖼️ *スクリーンショットは近日追加予定。*
-<!-- 📸 埋め方: docs/media/everywhere.png を追加し、上の「近日追加」行を消して、次の行のコメントを外してください:
-![OS 統合: トレイのミニプレイヤー、コントロールセンター、SMTC、MPRIS](docs/media/everywhere.png)
--->
-<!-- 📸 埋め方: docs/media/tray.png を追加してコメントを外す:
-![メニューバー / トレイの yututray ミニプレイヤー](docs/media/tray.png)
--->
 
 ### 自分好みに
 
 テーマ14種（34の色ロールすべて hex 編集可能）、アニメーション40種 — 流れ星や回る ASCII ドーナツからフルキャンバスのショーピース（花火、ライフゲーム、パイプ、プラズマ）まで — プリセット付き10バンド EQ、オーディオ出力デバイスの選択、ラウドネスノーマライズまで。UI そのものも English / 한국어 / 日本語 の3言語に対応しています — 設定 → 全般 → **言語** で順に切り替わります。
 
-![テーマとカラーの設定画面](docs/media/themes.png)
-![設定画面](docs/media/settings.png)
-![回る ASCII ドーナツを含むアニメーション](docs/media/animations.gif)
-![フルキャンバスのショーピースアニメーション — 花火、ライフゲーム、パイプ、プラズマ](docs/media/showpiece.gif)
-![プリセット付きの10バンド EQ](docs/media/eq.png)
+![ビギナーモードのヒントを表示したプレイヤーを囲む水槽アニメーション](docs/media/animations.gif)
+
+<details>
+<summary>再生・オーディオ出力・EQ の設定を見る</summary>
+
+<a href="docs/media/audio-output.png"><img src="docs/media/audio-output.png" width="620" alt="オーディオ出力、EQ プリセットと周波数スライダーが見える再生設定"></a>
+
+</details>
 
 ### レトロモード
 
 トグル一つですべてが CP437 安全になります — 素の Linux コンソールや年季の入った SSH セッション向け。アルバムアートも正真正銘の ASCII アートに。レトロモードでは UI 言語も英語に固定されます — CP437 には CJK のグリフがないためです。
 
-![ASCII アルバムアートのレトロモード](docs/media/retro.png)
-
 ### Spotify はコマンド一行でお引っ越し
 
 `ytt transfer import <url>` — チェックポイント、再開、あいまいな曲はマッチレポートへ。設定方法は下の[リファレンス](#リファレンス)に — 最初から最後まで手を引いてほしいなら[マニュアル](MANUAL.ja.md)へ。
-
-> 🖼️ *GIF は近日追加予定。*
-<!-- 📸 埋め方: docs/media/transfer.gif を追加し、上の「近日追加」行を消して、次の行のコメントを外してください:
-![Spotify のプレイリストがコマンド一行で引っ越す様子](docs/media/transfer.gif)
--->
 
 ### ショートカットはアプリが覚えています
 
 **`?`** を押すと、*あなたが変えた*キーがそのまま反映されたライブチートシートが出ます — アプリ操作は再設定でき、UI 全体がマウス対応。安全・モーダルキーは固定です。
 
-![ライブのキーバインドチートシート](docs/media/help.png)
-![初心者モードのインタラクティブツアー](docs/media/onboarding.png)
-![トラック行の右クリックコンテキストメニュー](docs/media/context-menu.png)
+<details>
+<summary>曲の右クリックメニューを見る</summary>
+
+<a href="docs/media/context-menu.png"><img src="docs/media/context-menu.png" width="620" alt="再生、キュー追加、お気に入り、プレイリスト追加、ダウンロードを選べる検索結果の右クリックメニュー"></a>
+
+</details>
 
 ## 基本のキー
 
